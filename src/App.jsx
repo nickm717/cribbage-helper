@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import TrainerScreenComponent from "./TrainerScreen.jsx";
 
 // ─── Scoring Engine ────────────────────────────────────────────────────────
 
@@ -363,11 +364,99 @@ function ScorePanel({ result, t }) {
   );
 }
 
+// ─── Navigation ────────────────────────────────────────────────────────────
+
+const NAV_ITEMS = [
+  { id: "scorer",  label: "Scorer",           icon: "🃏" },
+  { id: "trainer", label: "Cribbage Trainer",  icon: "🎓" },
+];
+
+function NavDrawer({ open, onClose, view, onNavigate, t }) {
+  return (
+    <>
+      {/* Overlay */}
+      <div
+        onClick={onClose}
+        style={{
+          position: "fixed", inset: 0,
+          background: "rgba(0,0,0,0.5)",
+          opacity: open ? 1 : 0,
+          pointerEvents: open ? "auto" : "none",
+          transition: "opacity 200ms",
+          zIndex: 100,
+        }}
+      />
+      {/* Panel */}
+      <div style={{
+        position: "fixed", top: 0, left: 0, bottom: 0,
+        width: 260,
+        background: t.surfaceBg,
+        borderRight: `1px solid ${t.border}`,
+        transform: open ? "translateX(0)" : "translateX(-100%)",
+        transition: "transform 200ms ease-out",
+        zIndex: 101,
+        display: "flex", flexDirection: "column",
+        fontFamily: "system-ui, -apple-system, sans-serif",
+      }}>
+        {/* Drawer header */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "20px 16px 16px",
+          borderBottom: `1px solid ${t.border}`,
+        }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: t.textMuted, letterSpacing: 1, textTransform: "uppercase" }}>Menu</span>
+          <button onClick={onClose} style={{
+            background: "none", border: "none", cursor: "pointer",
+            color: t.textSecondary, fontSize: 18, lineHeight: 1, padding: "2px 4px",
+            WebkitTapHighlightColor: "transparent",
+          }}>✕</button>
+        </div>
+        {/* Nav items */}
+        <div style={{ paddingTop: 8 }}>
+          {NAV_ITEMS.map(item => {
+            const active = view === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => { onNavigate(item.id); onClose(); }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 12,
+                  width: "100%", padding: "13px 16px",
+                  background: active ? `${t.accentYellow}1f` : "transparent",
+                  borderLeft: `3px solid ${active ? t.accentYellow : "transparent"}`,
+                  border: "none",
+                  borderLeftStyle: "solid",
+                  borderLeftWidth: 3,
+                  borderLeftColor: active ? t.accentYellow : "transparent",
+                  color: active ? t.accentYellow : t.textPrimary,
+                  fontSize: 15, fontWeight: active ? 700 : 500,
+                  cursor: "pointer", textAlign: "left",
+                  transition: "background 0.12s",
+                  WebkitTapHighlightColor: "transparent",
+                }}
+              >
+                <span style={{ fontSize: 18 }}>{item.icon}</span>
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function TrainerScreen({ t }) {
+  return <TrainerScreenComponent t={t} />;
+}
+
 // ─── App ───────────────────────────────────────────────────────────────────
 
 export default function CribbageCalculator() {
   const t = useTheme();
   const isDesktop = useIsDesktop();
+  const [view, setView] = useState("scorer");
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [slots, setSlots] = useState(Array(5).fill(null));
   const [activeSlot, setActiveSlot] = useState(0);
   const [selectedRank, setSelectedRank] = useState(null);
@@ -423,13 +512,27 @@ export default function CribbageCalculator() {
       <div style={{
         padding: "18px 16px 14px", background: t.surfaceBg,
         borderBottom: `1px solid ${t.border}`,
+        display: "flex", alignItems: "center", gap: 12,
       }}>
+        <button
+          onClick={() => setDrawerOpen(true)}
+          style={{
+            background: "none", border: "none", cursor: "pointer",
+            color: t.textPrimary, fontSize: 20, lineHeight: 1,
+            padding: "2px 4px", flexShrink: 0,
+            WebkitTapHighlightColor: "transparent",
+          }}
+          aria-label="Open menu"
+        >☰</button>
         <h1 style={{
           margin: 0, fontSize: 20, fontWeight: 800, color: t.textPrimary,
           fontFamily: "'Playfair Display', Georgia, serif",
-        }}>Cribbage Scorer</h1>
+        }}>{view === "scorer" ? "Cribbage Scorer" : "Cribbage Trainer"}</h1>
       </div>
 
+      {view === "trainer" && <TrainerScreen t={t} />}
+
+      {view === "scorer" && <>
       {/* Slot strip */}
       <div style={{
         background: t.surfaceBg, padding: "12px 16px",
@@ -499,7 +602,16 @@ export default function CribbageCalculator() {
             : `${4 - hand4.length} more card${4 - hand4.length > 1 ? "s" : ""} needed`}
         </div>
       )}
+      </>}
+
     </div>
+    <NavDrawer
+      open={drawerOpen}
+      onClose={() => setDrawerOpen(false)}
+      view={view}
+      onNavigate={setView}
+      t={t}
+    />
     </div>
   );
 }
