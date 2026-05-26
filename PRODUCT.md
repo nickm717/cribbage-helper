@@ -27,16 +27,16 @@ Voice: direct, second person, no jargon padding. "Discard 2 to the crib" — not
 
 ## Anti-references
 
-- **Cheesy casino / Vegas aesthetic.** No green felt textures, no gold gradients, no ornate filigree borders, no dice-and-chips iconography. This is a study tool, not a slot machine.
+- **Bright Vegas-floor aesthetic.** No slot-machine gold gradients, no garish bright greens, no ornate filigree borders, no dice-and-chips iconography, no animated coin showers on wins. The dark card-room felt we use is the opposite of this: deep, quiet, sophisticated. Think a private game-room at midnight, not a casino floor at noon.
 - **Childish mobile game.** No cartoon mascots, no bubble buttons with chunky drop shadows, no rainbow gradients celebrating taps. Playful does not mean infantilizing.
-- **Brutalist / experimental.** No raw HTML look, no monospace-everywhere, no harsh black borders as a statement. The app should feel considered, not provocative.
+- **Brutalist / experimental.** No raw HTML look, no monospace-everywhere as a statement (monospace is reserved for numeric data only), no harsh black borders as ornament. The app should feel considered, not provocative.
 - **Generic SaaS dashboard.** No identical card grids, no hero-metric template, no navy-and-gradient nav bars. This is a personal companion, not a B2B tool.
 
 ## Design Principles
 
 1. **One task per screen.** Discard, or see results — never both at once. The Trainer's two-phase flow (pick → reveal) is the model: a clean decision space, then a clean feedback space, never mixed.
 2. **Feedback over decoration.** Motion, color shifts, and celebration appear only when tied to a real signal — got the optimal play, efficiency ticked up, a new hand is ready. Nothing animates for its own sake.
-3. **Card-game heritage, restrained.** Tactile playing-card surfaces (cream stock, suit glyphs, rounded corners) honor the source material. The app chrome around them stays modern and platform-native. No felt, no green baize, no skeuomorphic ornament beyond what a real card actually has.
+3. **Card-game heritage, embraced.** Deep card-room felt is the primary surface. Warm cream playing cards with serif rank glyphs honor centuries of card-table visual language. The line we don't cross is the slot machine: no bright greens, no gold gradients, no ornament that doesn't appear on a real deck.
 4. **Mobile-thumb-first.** Primary actions sit in the bottom third of the screen and respect safe-area insets. The sticky dock pattern is canonical: hand is always reachable, results scroll above it.
 5. **Earn the player's trust through math.** EV is deterministic — same six cards always produce the same optimal play. The app commits to one best discard per hand; it does not hedge, soften, or list "options." Confidence is the product.
 

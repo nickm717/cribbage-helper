@@ -135,45 +135,63 @@ function bestKeep(h6, isDealer) {
 
 // ─── Card Components ─────────────────────────────────────────────────────────
 
-// PlayingCard: visual card only — no click/lift logic (CardFan handles that)
+// PlayingCard: cream Card Face surface with Spectral serif rank glyphs.
+// Two-layer shadow per DESIGN.md Two-Layer Shadow Rule. CardFan handles
+// the lift / rotate hover transform; this component only paints the face.
 function PlayingCard({ card, selected, dimmed, t }) {
   const red = card && isRed(card.suit);
+  const ink = red ? t.suitRed : t.suitDark;
+  const restShadow = "0 2px 8px oklch(0% 0 0 / 0.35), 0 1px 2px oklch(0% 0 0 / 0.25)";
+  const selectedShadow = `0 0 0 2px ${t.goldBright}, 0 6px 20px oklch(0% 0 0 / 0.45)`;
   return (
     <div style={{
-      width: 54, height: 78, borderRadius: 7, flexShrink: 0,
-      background: "#f5f0e8",
-      border: `2px solid ${selected ? t.accentYellow : "rgba(0,0,0,0.15)"}`,
-      boxShadow: selected
-        ? `0 8px 20px rgba(0,0,0,0.55), 0 0 0 2px ${t.accentYellow}`
-        : "0 3px 8px rgba(0,0,0,0.45)",
-      display: "flex", flexDirection: "column",
-      alignItems: "center", justifyContent: "center",
+      width: 54, height: 78, borderRadius: 6, flexShrink: 0,
+      background: t.cardFace,
+      border: selected ? `2px solid ${t.goldBright}` : "2px solid oklch(0% 0 0 / 0.08)",
+      boxShadow: selected ? selectedShadow : restShadow,
       opacity: dimmed ? 0.35 : 1,
-      transition: "opacity 0.15s, border-color 0.15s, box-shadow 0.15s",
+      transition: "opacity 150ms cubic-bezier(0.22, 0.8, 0.36, 1), border-color 150ms cubic-bezier(0.22, 0.8, 0.36, 1), box-shadow 150ms cubic-bezier(0.22, 0.8, 0.36, 1)",
       userSelect: "none", WebkitUserSelect: "none",
       position: "relative",
+      overflow: "hidden",
     }}>
-      {/* Top-left corner */}
-      <div style={{ position: "absolute", top: 3, left: 4, lineHeight: 1.1, textAlign: "center" }}>
-        <div style={{ fontSize: card?.rank === "10" ? 12 : 14, fontWeight: 900, color: red ? "#b91c1c" : "#1c1c1e", fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.01em", lineHeight: 1 }}>{card?.rank}</div>
-        <div style={{ fontSize: 10, color: red ? "#b91c1c" : "#1c1c1e", lineHeight: 1.2 }}>{card?.suit}</div>
+      {/* Top-left corner — Spectral rank + suit */}
+      <div style={{ position: "absolute", top: 3, left: 5, lineHeight: 1, textAlign: "left" }}>
+        <div style={{
+          fontSize: card?.rank === "10" ? 13 : 15,
+          fontWeight: 700, color: ink,
+          fontFamily: t.fontCard, lineHeight: 1,
+        }}>{card?.rank}</div>
+        <div style={{ fontSize: 11, color: ink, fontFamily: t.fontCard, lineHeight: 1.1, marginTop: 1 }}>{card?.suit}</div>
       </div>
-      {/* Center suit */}
-      <span style={{ fontSize: 24, color: red ? "#b91c1c" : "#1c1c1e", lineHeight: 1 }}>{card?.suit}</span>
-      {/* Bottom-right corner (rotated) */}
-      <div style={{ position: "absolute", bottom: 3, right: 4, lineHeight: 1.1, textAlign: "center", transform: "rotate(180deg)" }}>
-        <div style={{ fontSize: card?.rank === "10" ? 12 : 14, fontWeight: 900, color: red ? "#b91c1c" : "#1c1c1e", fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.01em", lineHeight: 1 }}>{card?.rank}</div>
-        <div style={{ fontSize: 10, color: red ? "#b91c1c" : "#1c1c1e", lineHeight: 1.2 }}>{card?.suit}</div>
+      {/* Center suit glyph — full-color focal point. Sits prominently at the
+          card center like the pip on a real playing card. */}
+      <span style={{
+        position: "absolute", top: "50%", left: "50%",
+        transform: "translate(-50%, -50%)",
+        fontSize: 30, color: ink, opacity: 1,
+        lineHeight: 1, pointerEvents: "none",
+      }}>{card?.suit}</span>
+      {/* Bottom-right corner — rotated 180° per real-deck convention */}
+      <div style={{
+        position: "absolute", bottom: 3, right: 5, lineHeight: 1,
+        textAlign: "left", transform: "rotate(180deg)",
+      }}>
+        <div style={{
+          fontSize: card?.rank === "10" ? 13 : 15,
+          fontWeight: 700, color: ink,
+          fontFamily: t.fontCard, lineHeight: 1,
+        }}>{card?.rank}</div>
+        <div style={{ fontSize: 11, color: ink, fontFamily: t.fontCard, lineHeight: 1.1, marginTop: 1 }}>{card?.suit}</div>
       </div>
     </div>
   );
 }
 
-// CardFan: flat row of cards with tap-to-select. Selected cards slide up in
-// place — no overlap means no stacking conflicts. Sized to fit 6 cards on
-// mobile (~375px): 6 × 56 + 5 × 4 = 356px.
+// CardFan: flat row of cards with tap-to-select. Selected cards lift -10px
+// per DESIGN.md card spec. Sized to fit 6 cards on mobile (~375px): 6 × 54 + 5 × 4 = 344px.
 function CardFan({ cards, selected = [], onSelect, dimOthers = false, t }) {
-  const LIFT = 18;
+  const LIFT = 12; // a touch above spec's 10 for thumb clarity on mobile
   return (
     <div style={{
       display: "flex", gap: 4, justifyContent: "center",
@@ -188,7 +206,7 @@ function CardFan({ cards, selected = [], onSelect, dimOthers = false, t }) {
             onClick={() => onSelect?.(i)}
             style={{
               transform: isSel ? `translateY(-${LIFT}px)` : "translateY(0)",
-              transition: "transform 0.15s ease",
+              transition: "transform 200ms cubic-bezier(0.22, 0.8, 0.36, 1)",
               cursor: onSelect ? "pointer" : "default",
               WebkitTapHighlightColor: "transparent",
             }}
@@ -203,14 +221,36 @@ function CardFan({ cards, selected = [], onSelect, dimOthers = false, t }) {
 
 // ─── Small reusable components ───────────────────────────────────────────────
 
+// MiniCard: chip variant. Used for "kept cards" and cut-card displays where
+// the cards should read as discrete objects with their own surface.
+// Black suits use textOnCard (deep value designed for the cream Card Face);
+// textPrimary would be invisible since it's the light-on-dark UI color.
 function MiniCard({ card, t }) {
+  const red = isRed(card.suit);
   return (
     <span style={{
       display: "inline-flex", alignItems: "center",
-      fontSize: 11, fontWeight: 800,
-      color: isRed(card.suit) ? t.redCard : t.blueCard,
-      background: t.surfaceRaised, borderRadius: 4, padding: "2px 5px",
-      fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.01em",
+      fontSize: 12, fontWeight: 700,
+      color: red ? t.suitRed : t.textOnCard,
+      background: t.cardFace, borderRadius: 4, padding: "3px 7px",
+      fontFamily: t.fontCard, lineHeight: 1,
+      border: `1px solid oklch(0% 0 0 / 0.08)`,
+    }}>{card.rank}{card.suit}</span>
+  );
+}
+
+// MiniCardInline: typographic variant. Used in score-row sub-text where the
+// cards are evidence of what scored, not separate objects. Renders as plain
+// inline glyphs in suit color, no chip, no border.
+function MiniCardInline({ card, t }) {
+  const red = isRed(card.suit);
+  return (
+    <span style={{
+      fontFamily: t.fontMono,
+      fontSize: 11,
+      fontWeight: 500,
+      color: red ? t.suitRed : t.textMuted,
+      whiteSpace: "nowrap",
     }}>{card.rank}{card.suit}</span>
   );
 }
@@ -258,11 +298,10 @@ function SessionStatStrip({ hands, yourPts, optPts, efficiency, t }) {
         </div>
       </div>
       <div style={{
-        fontFamily: "system-ui, -apple-system, sans-serif",
-        fontSize: 30, fontWeight: 800, lineHeight: 1,
+        fontFamily: t.fontMono,
+        fontSize: 32, fontWeight: 700, lineHeight: 1,
         color: hasData ? tier : t.textMuted,
-        letterSpacing: "-0.03em",
-        fontVariantNumeric: "tabular-nums",
+        letterSpacing: "-0.02em",
         flexShrink: 0,
       }}>
         {hasData ? `${efficiency}%` : "—"}
@@ -274,12 +313,17 @@ function SessionStatStrip({ hands, yourPts, optPts, efficiency, t }) {
 function ActionButton({ label, onClick, disabled, t }) {
   return (
     <button onClick={onClick} disabled={disabled} style={{
-      flex: 1, padding: "12px 0", borderRadius: 10, border: "none",
-      background: disabled ? t.surfaceRaised : t.accentYellow,
-      color: disabled ? t.textDisabled : "#1c1c1e",
-      fontSize: 15, fontWeight: 700, cursor: disabled ? "default" : "pointer",
-      transition: "background 0.15s", WebkitTapHighlightColor: "transparent",
-      fontFamily: "system-ui, -apple-system, sans-serif",
+      flex: 1, padding: "14px 0", borderRadius: 8, border: "none",
+      background: disabled ? t.feltMid : t.goldBright,
+      color: disabled ? t.textDisabled : t.textOnGold,
+      fontSize: 15, fontWeight: 600,
+      letterSpacing: "-0.01em",
+      cursor: disabled ? "default" : "pointer",
+      // CTA Glow per DESIGN.md: soft amber halo when active
+      boxShadow: disabled ? "none" : `0 2px 8px ${t.goldGlow}`,
+      transition: "background 120ms cubic-bezier(0.16, 0.8, 0.44, 1), box-shadow 120ms cubic-bezier(0.16, 0.8, 0.44, 1)",
+      WebkitTapHighlightColor: "transparent",
+      fontFamily: t.fontUi,
     }}>{label}</button>
   );
 }
@@ -300,26 +344,43 @@ function EVCell({ label, value, t }) {
   return (
     <div style={{ background: t.surfaceSunken, borderRadius: 8, padding: "8px 10px" }}>
       <div style={{ fontSize: 9, color: t.textMuted, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 2 }}>{label}</div>
-      <div style={{ fontSize: 18, fontWeight: 800, color: t.textPrimary, fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.01em" }}>{value}</div>
+      <div style={{ fontSize: 18, fontWeight: 600, color: t.textPrimary, fontFamily: t.fontMono, letterSpacing: "-0.01em" }}>{value}</div>
     </div>
   );
 }
 
-function ScoreLogRow({ item, t }) {
+// ScoreLogRow: v2 layout. Reason text on top, the cards that scored as inline
+// sub-text below, +N value right-aligned in SF Mono. The sub-line turns a
+// count into a teaching moment by showing exactly which cards combined.
+function ScoreLogRow({ item, t, accentGold = false }) {
+  const uniqueCards = [...new Map(item.cards.map(c => [cardKey(c), c])).values()];
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
-      <span style={{
-        minWidth: 32, height: 28, borderRadius: 6,
-        background: t.surfaceRaised, color: t.textPrimary,
-        display: "inline-flex", alignItems: "center", justifyContent: "center",
-        fontWeight: 700, fontSize: 12, flexShrink: 0,
-      }}>+{item.pts}</span>
-      <span style={{ fontSize: 13, color: t.textPrimary, flex: 1 }}>{item.reason}</span>
-      <div style={{ display: "flex", gap: 3, flexWrap: "wrap", justifyContent: "flex-end" }}>
-        {[...new Map(item.cards.map(c => [cardKey(c), c])).values()].map(c => (
-          <MiniCard key={cardKey(c)} card={c} t={t} />
-        ))}
+    <div style={{
+      display: "flex", alignItems: "center", gap: 12,
+      padding: "10px 14px", marginBottom: 6,
+      background: t.feltMid, border: `1px solid ${t.feltRule}`, borderRadius: 8,
+    }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          fontSize: 13, fontWeight: 500, color: t.textSecondary, lineHeight: 1.3,
+        }}>{item.reason}</div>
+        {uniqueCards.length > 0 && (
+          <div style={{
+            display: "flex", gap: 6, flexWrap: "wrap",
+            marginTop: 3, lineHeight: 1,
+          }}>
+            {uniqueCards.map((c, i) => (
+              <MiniCardInline key={cardKey(c) + "-" + i} card={c} t={t} />
+            ))}
+          </div>
+        )}
       </div>
+      <span style={{
+        fontFamily: t.fontMono,
+        fontSize: 16, fontWeight: 600,
+        color: accentGold ? t.goldBright : t.scorePositive,
+        lineHeight: 1, flexShrink: 0,
+      }}>+{item.pts}</span>
     </div>
   );
 }
@@ -414,12 +475,13 @@ function ScoreBody({ feedback, kept, cut, handResult, cribResult, optHandResult,
             </span>
           </div>
           {feedback.grade !== "Optimal" && (
-            <div style={{ fontSize: 12, color: t.textSecondary }}>
-              Optimal keep:{" "}
+            <div style={{
+              display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap",
+              fontSize: 13, color: t.textSecondary,
+            }}>
+              <span>Optimal keep:</span>
               {feedback.optKeep.map(c => (
-                <span key={cardKey(c)} style={{ color: isRed(c.suit) ? t.redCard : t.blueCard, fontWeight: 700, marginRight: 4, fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.01em" }}>
-                  {c.rank}{c.suit}
-                </span>
+                <MiniCard key={cardKey(c)} card={c} t={t} />
               ))}
             </div>
           )}
@@ -438,18 +500,18 @@ function ScoreBody({ feedback, kept, cut, handResult, cribResult, optHandResult,
               <span style={{ fontSize: 11, color: t.textMuted, marginLeft: 2 }}>cut</span>
             </>}
           </div>
-          {/* Score total */}
-          <div style={{ fontSize: 40, fontWeight: 900, color: t.accentYellow, fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.01em", lineHeight: 1, marginBottom: 10 }}>
-            {handResult.total} pts
+          {/* Score total — SF Mono display */}
+          <div style={{ fontFamily: t.fontMono, fontSize: 40, fontWeight: 700, color: t.goldBright, letterSpacing: "-0.02em", lineHeight: 1, marginBottom: 12 }}>
+            {handResult.total} <span style={{ fontSize: 16, color: t.textMuted, fontWeight: 500 }}>pts</span>
           </div>
           {/* Breakdown */}
           {handResult.log.map((item, i) => <ScoreLogRow key={i} item={item} t={t} />)}
           {!handResult.log.length && <div style={{ fontSize: 13, color: t.textSecondary }}>No scoring combinations</div>}
           {/* Optimal comparison */}
           {optResult && optHandResult && optHandResult.total !== handResult.total && (
-            <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${t.border}`, fontSize: 13, color: t.textSecondary }}>
+            <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${t.feltRule}`, fontSize: 13, color: t.textSecondary }}>
               Optimal keep would have scored{" "}
-              <span style={{ color: "#fb923c", fontWeight: 700, fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.01em" }}>{optHandResult.total} pts</span>
+              <span style={{ color: t.scoreMiss, fontWeight: 600, fontFamily: t.fontMono, letterSpacing: "-0.01em" }}>{optHandResult.total} pts</span>
             </div>
           )}
         </SectionBlock>
@@ -458,8 +520,8 @@ function ScoreBody({ feedback, kept, cut, handResult, cribResult, optHandResult,
       {/* Crib score (dealer only) */}
       {isDealer && cribResult && (
         <SectionBlock title="Your Crib" t={t}>
-          <div style={{ fontSize: 32, fontWeight: 900, color: t.textPrimary, fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.01em", lineHeight: 1, marginBottom: 10 }}>
-            {cribResult.total} pts
+          <div style={{ fontFamily: t.fontMono, fontSize: 32, fontWeight: 700, color: t.textPrimary, letterSpacing: "-0.02em", lineHeight: 1, marginBottom: 12 }}>
+            {cribResult.total} <span style={{ fontSize: 14, color: t.textMuted, fontWeight: 500 }}>pts</span>
           </div>
           {cribResult.log.map((item, i) => <ScoreLogRow key={i} item={item} t={t} />)}
           {!cribResult.log.length && <div style={{ fontSize: 13, color: t.textSecondary }}>No scoring combinations</div>}
@@ -476,14 +538,14 @@ function ScoreBody({ feedback, kept, cut, handResult, cribResult, optHandResult,
         <div style={{ fontSize: 9, color: t.textMuted, letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>
           Efficiency
         </div>
-        <div style={{ background: t.surfaceRaised, borderRadius: 6, height: 8, overflow: "hidden", marginBottom: 6 }}>
+        <div style={{ background: t.feltLift, borderRadius: 999, height: 3, overflow: "hidden", marginBottom: 6 }}>
           <div style={{
             height: "100%", width: `${Math.min(100, eff)}%`,
-            background: "linear-gradient(to right,#f87171,#fb923c,#f5b800,#34d399)",
-            borderRadius: 6, transition: "width 0.6s ease-out",
+            background: t.goldBright,
+            borderRadius: 999, transition: "width 0.6s ease-out",
           }} />
         </div>
-        <div style={{ fontSize: 28, fontWeight: 800, color: effColor, fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.01em" }}>{eff}%</div>
+        <div style={{ fontFamily: t.fontMono, fontSize: 28, fontWeight: 700, color: effColor, letterSpacing: "-0.02em" }}>{eff}%</div>
       </SectionBlock>
 
     </div>
@@ -608,7 +670,7 @@ export default function TrainerScreen({ t }) {
       </div>
 
       {/* ── Scrollable body ──────────────────────────────────────────────── */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "14px 16px 8px", background: "#0e2318" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "14px 16px 8px", background: t.feltDeep }}>
 
         {phase === "discard" && <DiscardBody isDealer={isDealer} t={t} />}
         {phase === "score" && (

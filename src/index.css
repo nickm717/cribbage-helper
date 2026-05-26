@@ -5,12 +5,14 @@
 body {
   margin: 0;
   padding: 0;
-  background: #111111; /* matches dark pageBg — fills safe-area regions behind notch/home bar */
+  /* Card Room felt-deep — fills safe-area regions behind notch/home bar */
+  background: oklch(18% 0.030 145);
 }
 
 @media (prefers-color-scheme: light) {
   body {
-    background: #f2f2f7; /* matches light pageBg */
+    /* Daylight Card Room: warm linen canvas */
+    background: oklch(88% 0.022 75);
   }
 }
 

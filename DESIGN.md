@@ -2,112 +2,165 @@
 name: Cribbage Helper
 description: A mobile-first cribbage scorer and discard trainer for serious students of the game.
 colors:
-  marker-gold: "#f5b800"
-  marker-gold-light: "#b8860b"
-  late-night-charcoal: "#111111"
-  study-surface: "#1c1c1e"
-  raised-surface: "#2c2c2e"
-  sunken-well: "#161618"
-  quiet-divider: "#3a3a3c"
-  primary-ink: "#f2f2f7"
-  secondary-ink: "#aeaeb2"
-  muted-ink: "#6c6c70"
-  disabled-ink: "#3a3a3c"
-  heart-diamond-red: "#ff6b6b"
-  spade-club-blue: "#74b9ff"
-  red-suit-bg: "#2e1515"
-  blue-suit-bg: "#12233a"
-  card-cream: "#f5f0e8"
-  score-tier-1: "#a78bfa"
-  score-tier-2: "#f87171"
-  score-tier-3: "#fb923c"
-  score-tier-4: "#34d399"
-  fog-grey: "#f2f2f7"
-  page-white: "#ffffff"
+  felt-deep: "oklch(18% 0.030 145)"
+  felt-base: "oklch(24% 0.038 148)"
+  felt-mid: "oklch(30% 0.042 150)"
+  felt-lift: "oklch(36% 0.040 152)"
+  felt-rule: "oklch(28% 0.028 148)"
+  card-face: "oklch(96% 0.012 88)"
+  card-warm: "oklch(92% 0.018 82)"
+  gold-bright: "oklch(78% 0.138 78)"
+  gold-muted: "oklch(68% 0.100 80)"
+  gold-dim: "oklch(58% 0.070 82)"
+  gold-glow: "oklch(78% 0.138 78 / 0.18)"
+  score-positive: "oklch(72% 0.130 150)"
+  score-miss: "oklch(60% 0.130 25)"
+  suit-red: "oklch(60% 0.185 25)"
+  suit-dark: "oklch(20% 0.018 148)"
+  text-primary: "oklch(94% 0.012 88)"
+  text-secondary: "oklch(70% 0.022 100)"
+  text-muted: "oklch(68% 0.018 100)"
+  text-on-card: "oklch(20% 0.025 145)"
+  text-on-gold: "oklch(18% 0.030 80)"
+  tier-grade-poor: "oklch(60% 0.130 25)"
+  tier-grade-fair: "oklch(70% 0.140 50)"
+  tier-grade-good: "oklch(78% 0.138 78)"
+  tier-grade-strong: "oklch(72% 0.130 150)"
 typography:
   display:
-    fontFamily: "system-ui, -apple-system, sans-serif"
-    fontSize: "56px"
-    fontWeight: 800
+    fontFamily: "-apple-system, 'SF Pro Display', BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+    fontSize: "48px"
+    fontWeight: 700
     lineHeight: 1
-    letterSpacing: "-0.02em"
+    letterSpacing: "-0.03em"
   title:
-    fontFamily: "system-ui, -apple-system, sans-serif"
-    fontSize: "20px"
-    fontWeight: 800
+    fontFamily: "-apple-system, 'SF Pro Display', BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+    fontSize: "28px"
+    fontWeight: 700
     lineHeight: 1.1
-    letterSpacing: "-0.01em"
-  rank:
-    fontFamily: "system-ui, -apple-system, sans-serif"
-    fontSize: "16px"
-    fontWeight: 900
-    lineHeight: 1
-    letterSpacing: "-0.01em"
-  body:
-    fontFamily: "system-ui, -apple-system, sans-serif"
-    fontSize: "13px"
+    letterSpacing: "-0.02em"
+  heading:
+    fontFamily: "-apple-system, 'SF Pro Text', BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+    fontSize: "21px"
     fontWeight: 600
+    lineHeight: 1.2
+    letterSpacing: "-0.02em"
+  body:
+    fontFamily: "-apple-system, 'SF Pro Text', BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+    fontSize: "15px"
+    fontWeight: 400
+    lineHeight: 1.5
+    letterSpacing: "normal"
+  bodySm:
+    fontFamily: "-apple-system, 'SF Pro Text', BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+    fontSize: "13px"
+    fontWeight: 500
     lineHeight: 1.4
     letterSpacing: "normal"
   label:
-    fontFamily: "system-ui, -apple-system, sans-serif"
-    fontSize: "9px"
+    fontFamily: "-apple-system, 'SF Pro Text', BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+    fontSize: "11px"
+    fontWeight: 600
+    lineHeight: 1
+    letterSpacing: "0.10em"
+  cardRank:
+    fontFamily: "'Spectral', Georgia, serif"
+    fontSize: "17px"
     fontWeight: 700
     lineHeight: 1
-    letterSpacing: "0.08em"
+    letterSpacing: "normal"
+  numeric:
+    fontFamily: "'SF Mono', ui-monospace, 'Cascadia Mono', 'Roboto Mono', monospace"
+    fontSize: "17px"
+    fontWeight: 500
+    lineHeight: 1
+    letterSpacing: "normal"
+  numericLg:
+    fontFamily: "'SF Mono', ui-monospace, 'Cascadia Mono', 'Roboto Mono', monospace"
+    fontSize: "36px"
+    fontWeight: 700
+    lineHeight: 1
+    letterSpacing: "-0.01em"
 rounded:
-  xs: "4px"
-  sm: "7px"
-  md: "10px"
+  sm: "4px"
+  md: "8px"
   lg: "12px"
-  xl: "18px"
+  card: "6px"
+  pill: "999px"
 spacing:
-  xs: "4px"
-  sm: "8px"
-  md: "12px"
-  lg: "16px"
-  xl: "20px"
-  xxl: "32px"
+  sp-1: "4px"
+  sp-2: "8px"
+  sp-3: "12px"
+  sp-4: "16px"
+  sp-5: "20px"
+  sp-6: "24px"
+  sp-8: "32px"
+  sp-10: "40px"
+  sp-12: "48px"
 components:
   button-primary:
-    backgroundColor: "{colors.marker-gold}"
-    textColor: "{colors.study-surface}"
+    backgroundColor: "{colors.gold-bright}"
+    textColor: "{colors.text-on-gold}"
     rounded: "{rounded.md}"
-    padding: "12px 16px"
+    padding: "14px 24px"
   button-secondary:
-    backgroundColor: "{colors.raised-surface}"
-    textColor: "{colors.primary-ink}"
+    backgroundColor: "{colors.felt-lift}"
+    textColor: "{colors.text-primary}"
     rounded: "{rounded.md}"
-    padding: "12px 16px"
-  rank-pill:
-    backgroundColor: "{colors.raised-surface}"
-    textColor: "{colors.primary-ink}"
-    rounded: "{rounded.xs}"
-    padding: "8px 6px"
-    typography: "{typography.rank}"
-  rank-pill-selected:
-    backgroundColor: "{colors.marker-gold}"
-    textColor: "{colors.study-surface}"
-    rounded: "{rounded.xs}"
-    padding: "8px 6px"
-  card-slot:
-    backgroundColor: "{colors.surface-sunken}"
-    textColor: "{colors.primary-ink}"
+    padding: "10px 20px"
+  button-ghost:
+    backgroundColor: "transparent"
+    textColor: "{colors.text-secondary}"
     rounded: "{rounded.md}"
-    padding: "0"
+    padding: "7px 16px"
+  button-deal:
+    backgroundColor: "{colors.felt-mid}"
+    textColor: "{colors.gold-bright}"
+    rounded: "{rounded.md}"
+    padding: "10px 20px"
   playing-card:
-    backgroundColor: "{colors.card-cream}"
-    textColor: "{colors.study-surface}"
-    rounded: "{rounded.sm}"
+    backgroundColor: "{colors.card-face}"
+    textColor: "{colors.text-on-card}"
+    rounded: "{rounded.card}"
+    padding: "8px"
+  playing-card-back:
+    backgroundColor: "{colors.felt-mid}"
+    textColor: "{colors.gold-dim}"
+    rounded: "{rounded.card}"
     padding: "0"
+  score-row:
+    backgroundColor: "{colors.felt-mid}"
+    textColor: "{colors.text-secondary}"
+    rounded: "{rounded.md}"
+    padding: "12px 20px"
+  score-row-total:
+    backgroundColor: "{colors.felt-deep}"
+    textColor: "{colors.gold-bright}"
+    rounded: "{rounded.md}"
+    padding: "16px 20px"
+  badge-positive:
+    backgroundColor: "oklch(23% 0.050 150)"
+    textColor: "{colors.score-positive}"
+    rounded: "{rounded.pill}"
+    padding: "4px 12px"
+  badge-gold:
+    backgroundColor: "oklch(23% 0.038 82)"
+    textColor: "{colors.gold-bright}"
+    rounded: "{rounded.pill}"
+    padding: "4px 12px"
+  badge-miss:
+    backgroundColor: "oklch(22% 0.042 25)"
+    textColor: "{colors.score-miss}"
+    rounded: "{rounded.pill}"
+    padding: "4px 12px"
   nav-drawer-item:
     backgroundColor: "transparent"
-    textColor: "{colors.primary-ink}"
+    textColor: "{colors.text-primary}"
     rounded: "{rounded.md}"
     padding: "14px 16px"
   nav-drawer-item-active:
-    backgroundColor: "{colors.marker-gold}"
-    textColor: "{colors.marker-gold}"
+    backgroundColor: "{colors.gold-glow}"
+    textColor: "{colors.gold-bright}"
     rounded: "{rounded.md}"
     padding: "14px 16px"
 ---
@@ -116,172 +169,227 @@ components:
 
 ## 1. Overview
 
-**Creative North Star: "The Study Companion"**
+**Creative North Star: "The Card Room"**
 
-A pocket coach for serious cribbage players. The visual system is built around one premise: the user is here on purpose, holding the phone in one hand, running through hands deliberately. Every screen is a single decision space. Color stays out of the way until the math has a verdict to deliver. Typography honors the source material (real cards have serif ranks) without leaning into card-game cliché. Soft ambient depth throughout, never theatrical lift.
+A serious card room you can hold in your hand. Deep felt under warm cream cards, aged-gold accents on the math that matters, a hush around the table that lets the player think. The visual system is built around the same premise as the product: the user is here on purpose, deliberately, to get better. The room is set for that.
 
-The product side of the personality is Raycast's discipline (one task per screen, quiet chrome, the work is the foreground). The brand side is Duolingo's loop (small, repeated wins; the reward arrives at the moment of feedback, not before). The two register as one system because both refuse decoration that doesn't serve the loop.
+We treat the centuries-old visual language of card tables as the inheritance and the constraint. Felt under cards. Serif rank glyphs on cream stock. Gold for value, green for a positive result, red for a miss. Nothing modern app design has invented in the last decade is in here because it would clash with the table itself. What modern design contributes is the chrome around the table: system-native UI typography, mobile-thumb-first ergonomics, deterministic feedback loops, accessibility done right.
 
-This system explicitly rejects four neighboring aesthetics: the green-felt Vegas table (no felts, no gold filigree, no dice iconography), the bubble-button mobile game (no chunky drop shadows, no rainbow celebrations, no mascots), generic SaaS dashboards (no hero-metric template, no identical card grids, no navy gradients), and brutalist statement work (no raw HTML, no monospace shouting, no harsh black borders as ornament).
+The line we never cross is the slot machine. The dark felt is a private game-room at midnight, not a casino floor at noon. Aged gold, not Vegas neon. No animations celebrating routine actions. No ornament that doesn't appear on a real deck.
 
 **Key Characteristics:**
-- Dark by default, light supported. The default user is studying on a phone after dinner, room dimmed; the dark canvas is where the cards read best.
-- One accent. Marker Gold (#f5b800) is the only chromatic color in the chrome. Suit reds and blues live only on cards, not on UI.
-- One typographic family. The platform's own sans (SF Pro on Apple, Roboto on Android). Hierarchy lives in weight and scale, never in family contrast.
-- Mobile-thumb-first. Primary actions live in the bottom third; safe-area insets are non-negotiable.
-- Tactile components. 10–18px radii, generous padding, soft shadows. Friendly without being childish.
+- Dark green felt as the primary surface across all screens. The felt is the canvas; cards float on it.
+- Three typographic families, each with one job: SF Pro for UI, Spectral for card faces, SF Mono for numeric data.
+- One chromatic accent: aged gold. Used sparingly, on the math the player should trust.
+- Score outcomes carry semantic color: green when something paid off, red when something was missed.
+- Mobile-thumb-first. Primary actions in the bottom third, safe-area-inset aware.
+- WCAG 2.1 AA verified on every documented color pair.
 
-## 2. Colors: The Study Companion Palette
+## 2. Colors: The Card Room Palette
 
-A near-monochrome chrome (tinted charcoals in dark mode, tinted whites in light) plus one warm accent that only appears when the math says something. Suit colors are quarantined to the playing cards themselves.
+OKLCH is the source of truth for every color (perceptually uniform; chroma drops cleanly at lightness extremes). Hex approximations are listed in parentheses for tooling that needs sRGB, but the OKLCH value is what the build resolves to.
 
-### Primary
-- **Marker Gold** (#f5b800 dark, #b8860b light): The one chromatic voice. Marks state the math has decided — the active card slot, the selected rank, the optimal play, the active nav item. Contrast on Raised Surface is 4.7:1 (dark) / 4.6:1 (light), both AA. Never used for decoration, never used in groups of more than one per region.
+### Felt Surfaces (the primary canvas)
+- **Felt Deep** `oklch(18% 0.030 145)` (≈ `#15201a`): The lowest surface. App canvas, score-total backgrounds, drawer overlay backdrop. The darkest value in the system.
+- **Felt Base** `oklch(24% 0.038 148)` (≈ `#1b2d22`): The primary surface. Card containers, header strip behind the title.
+- **Felt Mid** `oklch(30% 0.042 150)` (≈ `#233a2c`): Raised surface. Score rows, secondary buttons, badges, the bottom dock.
+- **Felt Lift** `oklch(36% 0.040 152)` (≈ `#2c4636`): The highest felt. Hover states, borders on secondary buttons, peg-track group dividers.
+- **Felt Rule** `oklch(28% 0.028 148)` (≈ `#233429`): The only border color. Hairline divider between sections.
 
-### Neutral (Dark Theme — canonical)
-- **Late-Night Charcoal** (#111111): The page canvas behind the card container. Also fills iOS safe-area regions so the notch and home indicator disappear into the design.
-- **Study Surface** (#1c1c1e): The primary working surface — the card container, the header strip, the score panel. Contrast on this surface is the contract: Primary Ink reads 14.7:1 on it.
-- **Raised Surface** (#2c2c2e): Buttons, badges, the inactive rank pills. One step closer to the user than Study Surface.
-- **Sunken Well** (#161618): Recessed surfaces — the empty card slot before a card is placed, the score itemization panel. One step away from the user than Study Surface.
-- **Quiet Divider** (#3a3a3c): The only border value. Used as a hairline (1px), never as a stripe.
+### Card Face (the warm cream surface for playing cards)
+- **Card Face** `oklch(96% 0.012 88)` (≈ `#f5f0e6`): The default cream of every playing card. Never quite white; always warm.
+- **Card Warm** `oklch(92% 0.018 82)` (≈ `#ede5d4`): A second cream, slightly darker. Used on the cut card to differentiate from the four hand cards.
 
-### Neutral (Light Theme)
-- **Fog Grey** (#f2f2f7): page canvas
-- **Page White** (#ffffff): primary surface
-- **Raised Surface** (#e5e5ea): raised
-- **Sunken Well** (#f2f2f7): recessed (matches canvas; intentional)
-- **Quiet Divider** (#c7c7cc): hairlines
+### Aged Gold (the one chromatic accent)
+- **Gold Bright** `oklch(78% 0.138 78)` (≈ `#d8a946`): The accent. Active states, the optimal-play indicator, the score-total digit, the active nav item. Contrast 9.20:1 on Felt Deep (AAA), 6.60:1 on Felt Mid (AA).
+- **Gold Muted** `oklch(68% 0.100 80)` (≈ `#b08838`): Hover/secondary gold. Disabled gold states.
+- **Gold Dim** `oklch(58% 0.070 82)` (≈ `#856828`): Decorative gold, never used for text. Borders on the Deal button, card-back glyph. 3.11:1 on Felt Mid (passes WCAG 1.4.11 Non-Text Contrast for graphics).
+- **Gold Glow** `oklch(78% 0.138 78 / 0.18)`: 18% alpha gold for soft accent backgrounds (active nav item) and ambient shadow tinting on the primary CTA hover.
 
-### Ink (Text Hierarchy)
-- **Primary Ink** (#f2f2f7 / #1c1c1e): All body and heading text. 14.7:1 / 18.1:1 contrast.
-- **Secondary Ink** (#aeaeb2 / #3a3a3c): Helper text, score row reasons, the "Hand value" subtitle. 5.0:1 / 13.4:1.
-- **Muted Ink** (#6c6c70 / #8e8e93): Inactive icon tints. Never used for actionable text.
-- **Disabled Ink** (#3a3a3c / #c7c7cc): Disabled chip text, used-up rank pills.
+### Semantic (score outcomes)
+- **Score Positive** `oklch(72% 0.130 150)` (≈ `#4ab27a`): A soft, instrumented green. The score-row "+pts" value, the dealer-side pill, the efficiency-bar fill. 7.95:1 on Felt Deep (AAA).
+- **Score Miss** `oklch(60% 0.130 25)` (≈ `#b54e3f`): A muted brick-red. Points the player gave up to opponent's crib, missed-optimal indicators.
 
-### Suit (Card Surfaces Only)
-- **Heart/Diamond Red** (#ff6b6b dark, #b91c1c light): ♥ and ♦ rank glyphs.
-- **Spade/Club Blue** (#74b9ff dark, #1e3a5f light): ♠ and ♣ rank glyphs.
-- **Red Suit Background** (#2e1515 dark) / **Blue Suit Background** (#12233a dark): Subtle tinted backgrounds behind suit-row buttons, signaling which suits sit where without shouting.
-- **Card Cream** (#f5f0e8): The physical playing card surface — never quite white, slightly warm, off-paper. The only cream in the system.
+### Suit (card surfaces only)
+- **Suit Red** `oklch(60% 0.185 25)` (≈ `#c44132`): ♥ and ♦ glyphs on the cream Card Face. 3.85:1 against Card Face — passes WCAG 1.4.11 for graphical signals at 13px+.
+- **Suit Dark** `oklch(20% 0.018 148)` (≈ `#1d2520`): ♠ and ♣ glyphs on the Card Face. 16.03:1 against Card Face (AAA).
 
-### Score Tier (Palette of Four)
-- **Tier 1 Purple** (#a78bfa / #7c3aed), **Tier 2 Red** (#f87171 / #dc2626), **Tier 3 Orange** (#fb923c / #c2410c), **Tier 4 Green** (#34d399 / #15803d): Used on the score-total digit to encode hand value bracket (low / medium / good / great). The only place in the system where a palette of more than one color is permitted.
+### Ink (text)
+- **Text Primary** `oklch(94% 0.012 88)` (≈ `#f0ecdf`): App title, body text, score-row primary labels. 15.69:1 on Felt Deep.
+- **Text Secondary** `oklch(70% 0.022 100)` (≈ `#aea99b`): Supporting copy, score-row labels. 5.03:1 on Felt Mid (AA).
+- **Text Muted** `oklch(68% 0.018 100)` (≈ `#a8a499`): Letterspaced uppercase labels, metadata, sub-text under score rows. 4.67:1 on Felt Mid (AA). This is the legibility floor; never go lower for readable text.
+- **Text On Card** `oklch(20% 0.025 145)` (≈ `#1d2520`): The deep value for any text on the cream Card Face. 16.03:1.
+- **Text On Gold** `oklch(18% 0.030 80)` (≈ `#2a2010`): Used on Gold Bright surfaces (primary CTA label). Warm-shifted near-black so it harmonizes with the gold underneath.
+
+### Tier Grade (efficiency / score-quality palette, four steps)
+Used exclusively on the Trainer's session efficiency value and per-hand quality grade.
+- **Poor** `oklch(60% 0.130 25)` — under 60% efficiency
+- **Fair** `oklch(70% 0.140 50)` — 60–74%
+- **Good** `oklch(78% 0.138 78)` (same as Gold Bright) — 75–89%
+- **Strong** `oklch(72% 0.130 150)` (same as Score Positive) — 90% and above
 
 ### Named Rules
 
-**The One Voice Rule.** Marker Gold appears on ≤10% of any given screen and on at most one logical region at a time (one selected card, one active rank, one optimal play badge). Its rarity is the point. If two things compete for gold, neither should be gold; the architecture is wrong.
+**The One Voice Rule.** Gold Bright appears on ≤10% of any given screen and on at most one logical region at a time (the selected card, the active nav item, the score total). Its rarity is the point.
 
-**The Suit Quarantine Rule.** Red and Blue suit colors exist on playing-card surfaces only — never on buttons, never on text, never on dividers. Suit-tinted button backgrounds (Red Suit Bg / Blue Suit Bg) are the only exception, and they are dark enough to read as neutral until you look twice.
+**The Felt-As-Surface Rule.** Every chrome surface in the app is felt — Deep / Base / Mid / Lift, no other neutral. Never reach for a "card" panel in mid-gray; the only off-felt surface in the system is the Card Face cream, and it belongs to playing cards alone.
 
-**The No-Pure-Black, No-Pure-White Rule.** The darkest value in the system is #111111, the lightest in light mode is #ffffff (a deliberate exception for the surface; canvas is #f2f2f7). Body text is never #fff on dark, never #000 on light. Tinted neutrals throughout.
+**The Suit Quarantine Rule.** Suit Red and Suit Dark exist on the Card Face only. They never appear on chrome buttons, chrome text, or dividers. The cream Card Face is the only background that suit colors are designed against.
+
+**The Semantic Color Rule.** Score Positive (green) and Score Miss (red) carry meaning, not decoration: they appear on values that have outcome polarity (points earned, points missed). Static UI elements never use them.
 
 ## 3. Typography
 
-**One family, the platform's own.** `system-ui, -apple-system, sans-serif` resolves to SF Pro on iOS and macOS, Roboto on Android, Segoe UI on Windows. Zero font load, zero FOUT, and the app reads as native on each device. This is what Raycast, Arc, and Linear all do; it's the modern-app default, not a fallback.
+**Three families, each with one job.**
 
-**Character:** Hierarchy comes from scale and weight, not from family contrast. The display sizes lean on negative letter-spacing (-0.02em to -0.03em) to keep big numerals tight and intentional. Numerals in stat strips use `font-variant-numeric: tabular-nums` so values don't shift width as digits change (87% → 100% holds its column).
+- **SF Pro** (`-apple-system, 'SF Pro Display', 'SF Pro Text', system-ui`) — every UI string in the app: titles, body, labels, button text, instruction copy. System-resolved so it's SF Pro on Apple platforms, Segoe UI on Windows, Roboto on Android. Zero font load.
+- **Spectral** (`'Spectral', Georgia, serif`) — playing card faces only. The rank pip and the suit glyph on a card. Spectral is a modern serif by Production Type; warmer and more readable than Playfair, less editorial. Loaded as a webfont (Google Fonts) at weight 700.
+- **SF Mono** (`'SF Mono', ui-monospace, 'Cascadia Mono', 'Roboto Mono', monospace`) — every numeric value the user reads as data: score totals, efficiency %, "+2 pts" on score rows, peg positions. Tabular by default; no separate `tabular-nums` directive needed.
 
 ### Hierarchy
-- **Display** (800, 56px, letter-spacing -0.02em, line-height 1): The score total. The single biggest moment in the app. Appears once per screen, dead center, color-tiered by value.
-- **Title** (800, 20px, letter-spacing -0.01em, line-height 1.1): App header title ("Cribbage Scorer" / "Cribbage Trainer"). Sits left of the hamburger.
-- **Rank** (900, 14–16px depending on context, letter-spacing -0.01em): The rank pip on a playing card and on the rank-strip selector. The heaviest weight in the system; a rank glyph should read as denser than any UI chrome around it.
-- **Body** (600, 13px, line-height 1.4): Score row reasons, in-context instruction copy, button labels.
-- **Label** (700, 9–11px, letter-spacing 0.08em, uppercase): Trainer stat chips ("EFFICIENCY"), section labels, role tags like "DEALER".
+
+- **Display** (SF Pro 700, 48px, -0.03em, line-height 1): The biggest moment. Page-level header context only.
+- **Title** (SF Pro 700, 28px, -0.02em, line-height 1.1): Screen header titles ("Cribbage Trainer", "Hand Score").
+- **Heading** (SF Pro 600, 21px, -0.02em): Section headings inside a screen.
+- **Body** (SF Pro 400, 15px, line-height 1.5): Default paragraph text and instruction copy.
+- **Body Sm** (SF Pro 500, 13px): Score-row labels, secondary information.
+- **Label** (SF Pro 600, 11px, letter-spacing 0.10em, uppercase): Section labels ("SESSION EFFICIENCY"), role tags, peg-track headers.
+- **Card Rank** (Spectral 700, 17px): The rank pip on a playing card (top-left, bottom-right). Sized down to 13px for suit glyphs.
+- **Numeric** (SF Mono 500, 17px): Inline numeric values — score-row points, badge counts, peg numbers.
+- **Numeric Lg** (SF Mono 700, 36–48px, -0.01em): Display numbers — score total, efficiency value.
 
 ### Named Rules
 
-**The One-Family Rule.** The entire app uses the system sans stack. No web fonts, no Google Fonts, no serif. Hierarchy is built from weight (400 → 600 → 800 → 900, ≥1.5× ratio steps) and scale (9px label → 13px body → 20px title → 56px display, ≥1.5× ratio steps). Family contrast is not in the vocabulary.
+**The Three-Family Rule.** SF Pro for UI text. Spectral for card faces. SF Mono for numbers. No other typography enters the system. Each family has one and only one job; mixing them on the same element (Spectral score, SF Mono title) is forbidden.
 
-**The Tabular-Nums Rule.** Any numeric value that updates in place (efficiency percentage, session points, score total during a flip) uses `font-variant-numeric: tabular-nums`. Variable-width digits make numbers dance; tabular numerals make them feel like instrumentation.
+**The Numbers-Are-Mono Rule.** Any number a player reads as data — score total, efficiency, "+pts", peg position — is set in SF Mono. The reason is twofold: monospace digits hold their column when values change (no width jump 87→100); and the change of family at the moment of a number reinforces that something is being counted.
 
-**The Negative-Letter-Spacing-On-Display Rule.** Display sizes (≥30px) carry -0.02em or -0.03em letter-spacing. At the system stack's default tracking, large numbers and short headers feel loose; tightening them makes the display weight read as deliberate.
+**The Card-Face-Is-Spectral Rule.** Spectral appears only on the cream Card Face. Never in UI text, never in scores, never in chrome. The serif on a card honors the source; the serif anywhere else would be costume jewelry.
 
-**The Letterspaced-Cap Label Rule.** Small labels (≤11px) are always uppercase with 0.08em letter-spacing. Sentence-case small text reads as cramped body text; uppercase letterspacing makes it read as a label.
+**The Letterspaced-Cap Label Rule.** Labels (≤11px) are uppercase with 0.10em letter-spacing. Sentence-case small text reads as cramped body; letterspaced caps read as label.
 
 ## 4. Elevation
 
-The system is **softly layered, not flat**. Depth comes from two sources used together: tonal layering on chrome (Sunken Well → Surface → Raised) and ambient shadow on physical-object metaphors (playing cards, the desktop card container, the sticky bottom dock). Nothing is harsh. No directional shadows, no inner shadows, no lift on hover unless something is genuinely moving.
+The system is **softly layered, not flat**. Depth comes from two sources used together: tonal felt layering (Deep → Base → Mid → Lift) and ambient shadow on playing-card surfaces. Chrome never shadows; cards always do.
 
 ### Shadow Vocabulary
-- **Card Rest** (`box-shadow: 0 3px 8px rgba(0,0,0,0.45)`): The shadow under an unselected playing card. Reads as a card lying on a table.
-- **Card Lifted** (`box-shadow: 0 8px 20px rgba(0,0,0,0.55), 0 0 0 2px var(--marker-gold)`): The selected playing card. Higher, softer, plus the gold ring. Used for the discard selection in Trainer.
-- **Container Ambient** (`box-shadow: 0 10px 40px rgba(0,0,0,0.4)`): The desktop card container on the page canvas. Subtle, atmospheric, large blur.
+
+- **Card Rest** `0 2px 8px oklch(0% 0 0 / 0.35), 0 1px 2px oklch(0% 0 0 / 0.25)`: The default shadow under an unselected playing card. Two layers: a soft diffuse drop and a tight contact shadow. Reads as a card lying on felt.
+- **Card Hover** `0 8px 24px oklch(0% 0 0 / 0.45), 0 2px 6px oklch(0% 0 0 / 0.30)`: The card has lifted 6px off the felt and rotated -0.5deg. Larger blur, deeper opacity.
+- **Card Selected** `0 0 0 2px gold-bright, 0 6px 20px oklch(0% 0 0 / 0.45)`: The selected playing card. A crisp gold ring plus an elevated drop shadow.
+- **CTA Glow** `0 2px 8px gold-glow` (`0 4px 16px gold-glow` on hover): Soft amber halo under the primary CTA button.
 
 ### Named Rules
 
-**The Cards-Float, Chrome-Doesn't Rule.** Only objects that map to physical things in cribbage (the playing cards) cast meaningful shadows. UI chrome — buttons, panels, the score total — is flat at rest and uses tonal layering for depth. This keeps the mental model clean: cards are objects you manipulate; chrome is the workspace.
+**The Cards-Float, Chrome-Doesn't Rule.** Only playing cards (objects that map to physical cards in cribbage) cast shadows. UI chrome — buttons, panels, dock, score rows — is flat at rest and uses felt-tonal layering for depth.
 
-**The No-Hover-Lift Rule.** Buttons do not translate up on hover. Hover changes background tint, never position. Lift is reserved for the card-selected state, where it carries real meaning (this is the card you've picked).
+**The Two-Layer Shadow Rule.** Card shadows are always two layers: a soft diffuse layer for atmosphere and a tight contact-shadow layer for grounding. A single-layer drop shadow looks 2014.
 
 ## 5. Components
 
 ### Buttons
-- **Shape:** Soft (radius 10px on primary actions, 12px on suit row, 4px on rank pills — the smallest interactive elements).
-- **Primary (action / CTA):** Marker Gold background, Study Surface text. Padding 12×16px. Used for "Discard →", "Deal New Hand →". One per screen.
-- **Secondary:** Raised Surface background, Primary Ink text. Same shape and padding as Primary. Used for inactive states and non-CTA actions.
-- **Selected state:** When a button is the currently-selected option in a group (e.g. the rank strip's active rank, the mode toggle's active mode), background flips to Marker Gold and text to Study Surface. This is the same treatment as Primary, by design: selected and primary are the same idea (this is the chosen path).
-- **Hover/Focus:** Background tint shifts one step lighter. No translation, no scale.
 
-### Rank Pills (Signature Component)
-- **Shape:** 4px radius (smallest in the system; they're the most numerous).
-- **Style:** Raised Surface background, Primary Ink text, Playfair 900 typography. Inactive at rest.
-- **Selected:** Marker Gold background, dark text. One can be selected at a time per strip.
-- **Used (all 4 cards of that rank placed):** Sunken Well background, Disabled Ink text. Reads as unavailable without being aggressively struck-through.
+- **Primary CTA.** Gold Bright background, Text On Gold label, 8px radius, 14×24px padding, soft amber glow shadow. The one moment of commitment on a screen ("Discard to Crib", "Score Hand"). One per screen.
+- **Secondary.** Felt Lift background, Text Primary label, hairline border in `oklch(42% 0.033 148)`. 10×20px padding. Sits next to a Primary for non-CTA actions.
+- **Ghost.** Transparent background, Text Secondary label, hairline Felt Rule border. 7×16px padding. For tertiary actions and inline links.
+- **Deal.** Felt Mid background, Gold Bright label, Gold Dim border. The signature button: it reads like a button on the felt itself. Used for "Deal New Hand", "Next Hand". Gains CTA glow on hover.
+- **Hover/Focus:** All buttons shift one tonal step lighter on hover. Primary CTA additionally translateY(-1px). No buttons scale on hover. Active state: scale(0.97) on press.
 
-### Playing Cards (Signature Component)
-- **Shape:** 7px radius. Card Cream background (#f5f0e8) — warm, paper-like, never #fff.
-- **Anatomy:** Top-left and bottom-right corners carry the rank + suit (the bottom-right is rotated 180° per real-deck convention). Center carries a large suit glyph.
-- **Suit color:** ♥♦ in Heart-Diamond Red, ♠♣ in Heart-Diamond Blue. The suit glyph is always present alongside the color — color alone is never the suit signal.
-- **Rest state:** Card Rest shadow.
-- **Selected state:** Card Lifted shadow + 2px Marker Gold border + raised position (translate or absolute-position offset). Z-index ensures the selected card paints above neighbors when in an overlapping fan; the current spec uses a flat row so this matters less, but the rule stands.
-- **Dimmed state:** Opacity 0.35. Used when other cards are selected and this card is not.
+### Playing Cards
 
-### Card Slots (Scorer)
-- **Shape:** 10px radius. Sunken Well background when empty, transparent when filled (the card itself sits in the slot).
-- **Empty:** A subtle dashed or tinted box prompting "tap to add". Marker Gold outline when this slot is the next target.
-- **Filled:** The Playing Card sits flush inside; the slot is invisible.
+- **Shape:** 72×102px, 6px radius. Card Face background. 2-layer Card Rest shadow.
+- **Anatomy:** Top-left and bottom-right carry the rank + suit glyph (bottom-right rotated 180°). Center carries a large suit glyph in full suit color (≈30px on the 54×78 trainer cards) — the prominent focal point, like the pip on a real playing card.
+- **Typography:** Rank in Spectral 700 17px. Suit at 13px. ♥♦ in Suit Red; ♠♣ in Suit Dark.
+- **Default:** Card Rest shadow.
+- **Hover:** translateY(-6px) + rotate(-0.5deg). Card Hover shadow. The rotation is the personality move: a card you point at picks up a slight tilt, like nudging it with a finger.
+- **Selected:** translateY(-10px). Card Selected shadow (2px gold ring + drop). No rotation.
+- **Card Back:** Felt Mid surface with a 2px Felt Lift inner border and a 1px diagonal repeating-linear-gradient hatch pattern at 7px spacing. A center Gold Dim diamond glyph at 55% opacity. Used during deal animations and on the cut card before it's flipped.
 
-### Suit Row
-- **Shape:** 12px radius.
-- **Style:** Red Suit Background (#2e1515) behind ♥♦, Blue Suit Background (#12233a) behind ♠♣. The tints are dark enough that they read as neutral until the eye lingers. Suit glyph is Heart-Diamond Red or Spade-Club Blue at 18–24px.
-- **Active:** Marker Gold outline ring (2px), not a fill — the tint stays.
+### Score Rows (Signature Component)
 
-### Score Panel
-- **Score Total:** Display typography (Playfair 800, 56px), color-tiered. Sits centered above the itemized list. The single biggest object on the screen by far.
-- **Itemized List:** Each row uses Sunken Well background, 10px radius, 9px vertical padding. Left column: a Raised Surface point-badge ("+2"). Right column: Secondary Ink reason text, Primary Ink for the reason itself.
+The score breakdown — best-improved pattern in v2. Each row carries three pieces:
+- **Label** (Body Sm, Text Secondary): the scoring rule ("Three of a kind", "Fifteen (5+10)", "Nobs").
+- **Sub** (SF Mono, 11px, Text Muted): the specific cards that scored ("4♠ 4♣ 4♥", "5♣ 10♦", "J♦ matches cut suit"). This is the line that turns a count into a teaching moment.
+- **Points** (SF Mono, 17px Score Positive — or Gold Bright for special scores like Nobs).
 
-### Navigation Drawer
-- **Shape:** Panel slides from left, 260px wide, Study Surface background, Quiet Divider hairline on the right edge. Overlay scrim at rgba(0,0,0,0.5).
-- **Item style:** 14×16px padding, transparent background, Primary Ink text. Optional leading icon.
-- **Item active:** Marker Gold text. Background tinted with Marker Gold at 12% opacity (`#f5b80020`). NO side-stripe border (see Don'ts).
-- **Animation:** Panel translates from -100% to 0 over 200ms, ease-out. Overlay opacity 0→1 in parallel.
+Row surface: Felt Mid, Felt Rule border, 8px radius, 12×20px padding, 8px vertical gap between rows.
 
-### Trainer Stat Chips
-- **Style:** Letterspaced-cap label above a numeric value. No background, no border. Grid of 4 (HANDS, EFFICIENCY, YOUR PTS, OPT PTS) below the header, separated by Quiet Divider hairlines (top and bottom only).
+The Total row breaks pattern: Felt Deep background, larger padding (16×20px), Gold Bright score in Numeric Lg (SF Mono 28px+).
+
+### Efficiency Bar (Trainer)
+
+- **Layout:** Letterspaced "SESSION EFFICIENCY" label above a large SF Mono Gold Bright value (36px), with the `%` sign in smaller Text Muted SF Pro. 3px progress track below.
+- **Track:** Felt Lift background, Gold Bright fill. Pill-shaped (border-radius 999px).
+- **Empty state:** No fill, em-dash in place of the percentage. The bar must not show false progress before any hands have been played.
+
+### Crib Destination (Trainer Discard Phase)
+
+The replacement for the legacy DEALER / PONE pill. A three-line headline that uses plain language:
+- **Label** "DISCARDING TO" (Label style, 11px, Text Muted)
+- **Headline** "Your crib" or "Opponent's crib" (SF Pro Bold 24–28px, Text Primary, -0.01em)
+- **Implication** "These two cards score for you" / "...for them" (Body Sm, Text Secondary)
+
+No emoji, no icons. Strategic posture is taught through the implication line.
+
+### Role Pills (Future Surface — Pegging Only)
+
+Reserved exclusively for the future pegging surface, where the technical Dealer / Pone term is unavoidable. Never used in the discard-phase UI.
+
+- **Pone Pill:** Felt-tinted gold background `oklch(26% 0.042 82)`, Gold Bright text, gold border `oklch(40% 0.065 80)`. Letterspaced uppercase 11px, pill-shaped.
+- **Dealer Pill:** Felt-tinted green background `oklch(24% 0.042 148)`, Score Positive text, green border `oklch(38% 0.055 150)`. Same shape, different palette.
+- **Dot:** A 7px filled circle in the matching text color, leading the label.
+
+### Score Badges
+
+Letterspaced inline pills for inline status. SF Mono inside, 13px Medium.
+- **Positive:** dark green tint, Score Positive text. "+12 pts"
+- **Gold:** dark gold tint, Gold Bright text. "Nobs +1"
+- **Miss:** dark red tint, Score Miss text. "Missed +4"
+- **Neutral:** Felt Mid background, Text Secondary text. "0 pts"
+
+Each carries a 5px filled `badge-dot` in matching color before the value.
+
+### Pegging Track (Future Surface)
+
+Documented now so the visual language is locked when we get there. No code yet.
+- **Layout:** A horizontal row of `peg-group` units. Each unit is a 14×14px peg-hole circle stacked over an 8px SF Mono peg-number.
+- **Hole states:** Empty (Felt Mid fill, Felt Lift border), Player 1 (Gold Bright fill with subtle gold glow), Player 2 (Score Miss / red fill).
+- **Dividers:** Vertical 1px Felt Lift dividers between groups of 5 (every street).
+- **Container:** Felt Deep background, Felt Rule hairline border, 12px radius, 16px padding.
+
+### Nav Drawer
+
+- **Panel:** 260px wide, slides from left, Felt Base background, Felt Rule right edge. Overlay scrim at `oklch(0% 0 0 / 0.5)`.
+- **Item:** 14×16px padding, 8px radius, transparent background, Text Primary label.
+- **Item Active:** Gold Glow background (`gold-bright` at 18% alpha), Gold Bright label. No side-stripe.
+- **Animation:** Panel translates from -100% to 0 over 200ms ease-out. Overlay opacity in parallel.
 
 ## 6. Do's and Don'ts
 
 ### Do:
-- **Do** use Marker Gold (#f5b800) at ≤10% per screen, on one logical region at a time.
-- **Do** use the system sans stack (`system-ui, -apple-system, sans-serif`) for the entire app. Hierarchy through weight (400 / 600 / 800 / 900) and scale, never family contrast.
-- **Do** apply `font-variant-numeric: tabular-nums` to any number that updates in place (efficiency %, session points).
-- **Do** tighten display sizes (≥30px) with -0.02em to -0.03em letter-spacing.
-- **Do** keep the playing card's center suit glyph at 24–30px so it reads from arm's length.
-- **Do** show the suit glyph (♠♥♦♣) every time suit color is used, so color-blind users are never blocked.
-- **Do** treat the bottom of the mobile screen as primary real estate. Sticky dock, safe-area insets, primary actions within thumb reach.
-- **Do** use 10–12px radii on chrome and 7px on playing cards. The card is the only sharper-cornered surface (real cards have sharper corners than buttons in this system).
-- **Do** ease motion out with `cubic-bezier(0.4, 0, 0.2, 1)` or steeper exponential curves over 150–200ms.
-- **Do** maintain WCAG AA contrast across both themes. The token-comment contrast notes in `App.jsx` are part of the contract.
+- **Do** use Felt Deep/Base/Mid/Lift as the entire chrome palette. Every UI surface is felt.
+- **Do** use SF Pro for UI text, Spectral 700 for card ranks/suits, SF Mono for any number a player reads as data.
+- **Do** use Gold Bright sparingly: one logical region per screen, ≤10% of pixels. Reserve it for moments the math has decided.
+- **Do** use Score Positive (green) for points earned and Score Miss (red) for points missed. Outcome polarity is the only reason these colors appear.
+- **Do** ground every playing card with the two-layer Card Rest shadow. Cards float; chrome doesn't.
+- **Do** lift the card -6px and rotate it -0.5deg on hover. The rotation is the personality.
+- **Do** include the cards-that-scored sub-line on every score row. The sub-text turns a count into a teaching moment.
+- **Do** apply tier-grade color (Poor/Fair/Good/Strong) to the session efficiency value and the per-hand quality grade, exclusively.
+- **Do** maintain WCAG AA on text and 3:1 on graphical signals. The v2 contrast audit is the contract.
+- **Do** name new colors with the `felt-*` / `card-*` / `gold-*` / `text-*` / `score-*` prefix system. Don't invent loose naming.
+- **Do** ease motion out with `cubic-bezier(0.22, 0.8, 0.36, 1)` for cards and `cubic-bezier(0.16, 0.8, 0.44, 1)` for UI.
 
 ### Don't:
-- **Don't** use side-stripe borders (`border-left: 3px solid …`) as a colored accent on cards, list items, or nav items. The current `NavDrawer` active-item left stripe is a documented violation pending replacement: use the Marker-Gold-at-12% background tint alone, with Marker Gold text. The full border around an item is fine; a single colored stripe is not.
-- **Don't** introduce a second chromatic chrome color. There is one accent (Marker Gold). Suit reds and blues are quarantined to cards.
-- **Don't** use #000 or #fff for chrome. Late-Night Charcoal (#111111) is the darkest value; tinted whites only in light mode.
-- **Don't** ship green felt, gold gradients, ornate borders, or any other Vegas-casino motif. This is a study tool, not a slot machine.
-- **Don't** ship cartoon mascots, rainbow celebrations, or bubble-button drop shadows. Playful does not mean infantilizing.
-- **Don't** ship the hero-metric template (big number, small label, supporting stats, gradient accent). The Trainer's stat row is intentionally a flat letterspaced-label grid, not a SaaS dashboard hero.
-- **Don't** ship identical card grids of icon-plus-heading-plus-text. The score panel and the playing cards are the only "card" shapes in the system; everything else is flat surface.
-- **Don't** ship modal dialogs as a first-resort UI. The drawer pattern is the only overlay pattern the system commits to. New flows should be inline phases (see Trainer's discard → score), not modals.
-- **Don't** translate buttons on hover. Hover shifts background tint only. Lift is reserved for the selected card.
-- **Don't** use em dashes in copy. Use commas, colons, periods, or parentheses.
-- **Don't** use gradient text or background-clip: text. Emphasis is a job for weight and size.
+- **Don't** introduce a second chromatic accent. Aged gold is the only chromatic chrome color. Suit reds and the semantic green/red are quarantined to their roles.
+- **Don't** use side-stripe borders (`border-left: 3px solid …`) as a colored accent. Use full borders, background tints, or nothing.
+- **Don't** use Spectral or any serif in UI chrome. Spectral on a button or score panel is costume jewelry.
+- **Don't** use SF Mono for prose, labels, or UI text. SF Mono is exclusively for numbers a player reads as data.
+- **Don't** ship slot-machine gold gradients, garish bright greens, ornate filigree borders, dice-and-chips iconography, or any other Vegas-floor motif. Aged gold and deep felt are the opposite of this.
+- **Don't** ship DEALER / PONE jargon in player-facing copy. Use "Your crib" / "Opponent's crib" in the discard phase. The Dealer/Pone role pills are reserved for the future pegging surface only.
+- **Don't** ship cartoon mascots, rainbow tap celebrations, or bubble-button drop shadows.
+- **Don't** ship the hero-metric template (big number + label + supporting stats + gradient accent).
+- **Don't** ship modal dialogs as a first-resort UI. The drawer is the system's only overlay pattern.
+- **Don't** translate buttons on hover beyond -1px on the primary CTA. Hover is a tint shift; lift is reserved for cards.
+- **Don't** use em dashes in user-visible copy. Commas, colons, periods, parentheses.
+- **Don't** use gradient text or `background-clip: text`. Emphasis is a job for weight and size.
+- **Don't** use single-layer drop shadows on cards. Two layers minimum: diffuse atmosphere + tight contact.

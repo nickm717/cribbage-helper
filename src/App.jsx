@@ -82,85 +82,144 @@ function scoreHand(hand4, starter, isCrib) {
   return { total: parts.reduce((s,p)=>s+p.pts,0), log: parts.flatMap(p=>p.log) };
 }
 
-// ─── Theme tokens ──────────────────────────────────────────────────────────
+// ─── Theme tokens — The Card Room ─────────────────────────────────────────
 //
+// Source of truth: DESIGN.md. OKLCH authored; values inlined here so the
+// runtime doesn't depend on browser CSS-color-4 support for JS-style props.
 // All contrast ratios verified against WCAG AA (4.5:1 normal text, 3:1 UI).
 //
-// Dark mode palette:
-//   pageBg        #111111   —  canvas
-//   surfaceBg     #1c1c1e   —  card/header surfaces
-//   surfaceRaised #2c2c2e   —  elevated elements (buttons, badges)
-//   surfaceSunken #161618   —  recessed wells
-//   border        #3a3a3c   —  dividers
-//   textPrimary   #f2f2f7   —  contrast vs #1c1c1e → 14.7:1 ✓
-//   textSecondary #aeaeb2   —  contrast vs #1c1c1e → 5.0:1 ✓
-//   textMuted     #6c6c70   —  decorative only (not relied on for info)
-//   textDisabled  #3a3a3c   —  inactive states
-//   accentYellow  #f5b800   —  active slot ring; contrast vs #2c2c2e → 4.7:1 ✓
-//   redCard       #ff6b6b   —  ♥♦ on dark bg; contrast vs #1c1c1e → 5.6:1 ✓
-//   blueCard      #74b9ff   —  ♠♣ on dark bg; contrast vs #1c1c1e → 7.1:1 ✓
-//   redSuitBg     #2e1515   —  suit button bg (red)
-//   blueSuitBg    #12233a   —  suit button bg (blue/black)
-//   redSuitHover  #3d1a1a
-//   blueSuitHover #1a3050
-//
-// Light mode palette:
-//   pageBg        #f2f2f7
-//   surfaceBg     #ffffff
-//   surfaceRaised #e5e5ea
-//   surfaceSunken #f2f2f7
-//   border        #c7c7cc
-//   textPrimary   #1c1c1e   —  contrast vs #ffffff → 18.1:1 ✓
-//   textSecondary #3a3a3c   —  contrast vs #ffffff → 13.4:1 ✓
-//   textMuted     #8e8e93   —  decorative only
-//   textDisabled  #c7c7cc
-//   accentYellow  #b8860b   —  darker gold for light bg; contrast vs #e5e5ea → 4.6:1 ✓
-//   redCard       #b91c1c   —  ♥♦ on white; contrast vs #ffffff → 5.9:1 ✓
-//   blueCard      #1e3a5f   —  ♠♣ on white; contrast vs #ffffff → 10.1:1 ✓
-//   redSuitBg     #fef2f2
-//   blueSuitBg    #eff6ff
-//   redSuitHover  #fee2e2
-//   blueSuitHover #dbeafe
+// Old token names (pageBg, surfaceBg, accentYellow, redCard, scoreAccents, …)
+// are retained as aliases pointing to the new Card Room values so existing
+// call-sites keep working. New canonical names (feltDeep, feltBase, goldBright,
+// scorePositive, tierGrade, fontUi, fontCard, fontMono) live alongside.
+
+const FONT_UI   = "-apple-system, 'SF Pro Display', 'SF Pro Text', BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
+const FONT_CARD = "'Spectral', Georgia, 'Times New Roman', serif";
+const FONT_MONO = "'SF Mono', ui-monospace, 'Cascadia Mono', 'Roboto Mono', 'Menlo', monospace";
 
 function makeTheme(dark) {
-  return dark ? {
-    dark: true,
-    pageBg:        "#111111",
-    surfaceBg:     "#1c1c1e",
-    surfaceRaised: "#2c2c2e",
-    surfaceSunken: "#161618",
-    border:        "#3a3a3c",
-    textPrimary:   "#f2f2f7",
-    textSecondary: "#aeaeb2",
-    textMuted:     "#6c6c70",
-    textDisabled:  "#3a3a3c",
-    accentYellow:  "#f5b800",
-    redCard:       "#ff6b6b",
-    blueCard:      "#74b9ff",
-    redSuitBg:     "#2e1515",
-    blueSuitBg:    "#12233a",
-    redSuitHover:  "#3d1a1a",
-    blueSuitHover: "#1a3050",
-    scoreAccents:  ["#a78bfa","#f87171","#fb923c","#34d399"], // purple/red/orange/green
-  } : {
+  if (dark) {
+    // Dark mode — The Card Room at midnight
+    const feltDeep      = "oklch(18% 0.030 145)";   // canvas. AAA backdrop.
+    const feltBase      = "oklch(24% 0.038 148)";   // primary surface (containers, header)
+    const feltMid       = "oklch(30% 0.042 150)";   // raised (rows, secondary buttons, dock)
+    const feltLift      = "oklch(36% 0.040 152)";   // highest felt (hover, borders)
+    const feltRule      = "oklch(28% 0.028 148)";   // hairline divider
+    const cardFace      = "oklch(96% 0.012 88)";    // playing-card cream
+    const cardWarm      = "oklch(92% 0.018 82)";    // cut card / second cream
+    const goldBright    = "oklch(78% 0.138 78)";    // the one accent
+    const goldMuted     = "oklch(68% 0.100 80)";    // hover / secondary gold
+    const goldDim       = "oklch(58% 0.070 82)";    // decorative gold (borders, glyphs)
+    const goldGlow      = "oklch(78% 0.138 78 / 0.18)";
+    const scorePositive = "oklch(72% 0.130 150)";   // earned points (green)
+    const scoreMiss     = "oklch(60% 0.130 25)";    // missed points (red)
+    const suitRed       = "oklch(60% 0.185 25)";    // ♥♦ on cream card face
+    const suitDark      = "oklch(20% 0.018 148)";   // ♠♣ on cream card face
+    const textPrimary   = "oklch(94% 0.012 88)";    // 15.7:1 on feltDeep
+    const textSecondary = "oklch(70% 0.022 100)";   // 5.0:1 on feltMid
+    const textMuted     = "oklch(68% 0.018 100)";   // 4.7:1 on feltMid — legibility floor
+    const textDisabled  = "oklch(48% 0.015 100)";
+    return {
+      dark: true,
+      // Canonical Card Room names
+      feltDeep, feltBase, feltMid, feltLift, feltRule,
+      cardFace, cardWarm,
+      goldBright, goldMuted, goldDim, goldGlow,
+      scorePositive, scoreMiss,
+      suitRed, suitDark,
+      textPrimary, textSecondary, textMuted, textDisabled,
+      textOnCard: "oklch(20% 0.025 145)",
+      textOnGold: "oklch(18% 0.030 80)",
+      // Four-step tier-grade palette: [poor, fair, good, strong]
+      tierGrade: [
+        "oklch(60% 0.130 25)",  // poor — under 60%
+        "oklch(70% 0.140 50)",  // fair — 60–74
+        "oklch(78% 0.138 78)",  // good — 75–89 (same as goldBright)
+        "oklch(72% 0.130 150)", // strong — 90+ (same as scorePositive)
+      ],
+      // Typography stacks
+      fontUi: FONT_UI, fontCard: FONT_CARD, fontMono: FONT_MONO,
+      // Legacy aliases — point old names at new Card Room values
+      pageBg:        feltDeep,
+      surfaceBg:     feltBase,
+      surfaceRaised: feltMid,
+      surfaceSunken: feltDeep,
+      border:        feltRule,
+      accentYellow:  goldBright,
+      redCard:       suitRed,
+      blueCard:      suitDark,
+      // Suit-row tinted backgrounds. Lightness bumped above felt-mid so the
+      // suit row reads as a clearly raised step. Hue tint stays subtle so
+      // the felt-room aesthetic isn't disrupted.
+      redSuitBg:     "oklch(38% 0.060 25)",
+      blueSuitBg:    "oklch(38% 0.030 240)",
+      redSuitHover:  "oklch(46% 0.080 25)",
+      blueSuitHover: "oklch(46% 0.040 240)",
+      // Legacy scoreAccents → tierGrade aliased in old [worst→best] order
+      scoreAccents: [
+        "oklch(60% 0.130 25)",
+        "oklch(70% 0.140 50)",
+        "oklch(78% 0.138 78)",
+        "oklch(72% 0.130 150)",
+      ],
+    };
+  }
+  // Light mode — Daylight Card Room
+  const feltDeep      = "oklch(88% 0.022 75)";    // warm linen canvas
+  const feltBase      = "oklch(94% 0.012 88)";    // primary surface (pale cream)
+  const feltMid       = "oklch(91% 0.014 85)";    // raised (warm off-cream)
+  const feltLift      = "oklch(85% 0.018 80)";    // borders, hover
+  const feltRule      = "oklch(78% 0.018 80)";    // hairlines
+  const cardFace      = "oklch(98% 0.008 90)";    // brighter than surfaces; cards pop
+  const cardWarm      = "oklch(95% 0.012 85)";
+  const goldBright    = "oklch(55% 0.130 75)";    // deeper bronze; ~5:1 on cream
+  const goldMuted     = "oklch(45% 0.110 78)";
+  const goldDim       = "oklch(60% 0.090 82)";
+  const goldGlow      = "oklch(55% 0.130 75 / 0.20)";
+  const scorePositive = "oklch(45% 0.150 150)";
+  const scoreMiss     = "oklch(50% 0.180 25)";
+  const suitRed       = "oklch(48% 0.190 25)";    // ♥♦ on cream card face (light)
+  const suitDark      = "oklch(20% 0.018 148)";
+  const textPrimary   = "oklch(22% 0.020 80)";
+  const textSecondary = "oklch(40% 0.022 85)";
+  const textMuted     = "oklch(50% 0.020 90)";
+  const textDisabled  = "oklch(70% 0.015 85)";
+  return {
     dark: false,
-    pageBg:        "#f2f2f7",
-    surfaceBg:     "#ffffff",
-    surfaceRaised: "#e5e5ea",
-    surfaceSunken: "#f2f2f7",
-    border:        "#c7c7cc",
-    textPrimary:   "#1c1c1e",
-    textSecondary: "#3a3a3c",
-    textMuted:     "#8e8e93",
-    textDisabled:  "#c7c7cc",
-    accentYellow:  "#b8860b",
-    redCard:       "#b91c1c",
-    blueCard:      "#1e3a5f",
-    redSuitBg:     "#fef2f2",
-    blueSuitBg:    "#eff6ff",
-    redSuitHover:  "#fee2e2",
-    blueSuitHover: "#dbeafe",
-    scoreAccents:  ["#7c3aed","#dc2626","#c2410c","#15803d"],
+    feltDeep, feltBase, feltMid, feltLift, feltRule,
+    cardFace, cardWarm,
+    goldBright, goldMuted, goldDim, goldGlow,
+    scorePositive, scoreMiss,
+    suitRed, suitDark,
+    textPrimary, textSecondary, textMuted, textDisabled,
+    textOnCard: "oklch(20% 0.025 145)",
+    textOnGold: "oklch(98% 0.010 80)",
+    tierGrade: [
+      "oklch(50% 0.180 25)",
+      "oklch(55% 0.150 60)",
+      "oklch(55% 0.130 75)",
+      "oklch(45% 0.150 150)",
+    ],
+    fontUi: FONT_UI, fontCard: FONT_CARD, fontMono: FONT_MONO,
+    // Legacy aliases
+    pageBg:        feltDeep,
+    surfaceBg:     feltBase,
+    surfaceRaised: feltMid,
+    surfaceSunken: feltDeep,
+    border:        feltRule,
+    accentYellow:  goldBright,
+    redCard:       suitRed,
+    blueCard:      suitDark,
+    redSuitBg:     "oklch(93% 0.035 25)",
+    blueSuitBg:    "oklch(92% 0.025 240)",
+    redSuitHover:  "oklch(88% 0.050 25)",
+    blueSuitHover: "oklch(86% 0.035 240)",
+    scoreAccents: [
+      "oklch(50% 0.180 25)",
+      "oklch(55% 0.150 60)",
+      "oklch(55% 0.130 75)",
+      "oklch(45% 0.150 150)",
+    ],
   };
 }
 
@@ -192,38 +251,40 @@ function useIsDesktop() {
 
 function CardPill({ card, active, onClick, onRemove, t }) {
   const red = card && isRed(card.suit);
+  const filled = !!card;
   return (
     <button
       onClick={onClick}
       style={{
-        flex: 1, height: "clamp(38px, 11vw, 44px)", borderRadius: 10, border: "none",
-        background: t.surfaceRaised,
-        outline: active ? `2px solid ${t.accentYellow}` : `2px solid transparent`,
+        flex: 1, height: "clamp(38px, 11vw, 44px)", borderRadius: 8, border: "none",
+        // Filled = real card lying on felt (cream + Spectral). Empty = felt slot placeholder.
+        background: filled ? t.cardFace : t.feltMid,
+        outline: active ? `2px solid ${t.goldBright}` : `2px solid transparent`,
         outlineOffset: 1,
         cursor: "pointer", position: "relative",
         display: "flex", alignItems: "center", justifyContent: "center",
-        transition: "outline 0.1s",
+        boxShadow: filled ? "0 2px 8px oklch(0% 0 0 / 0.35), 0 1px 2px oklch(0% 0 0 / 0.25)" : "none",
+        transition: "outline 0.1s, box-shadow 0.15s",
         WebkitTapHighlightColor: "transparent",
       }}
     >
-      {card ? (
+      {filled ? (
         <>
           <span style={{
-            fontSize: 16, fontWeight: 800,
-            color: red ? t.redCard : t.blueCard,
-            fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.02em",
-            letterSpacing: -0.5,
+            fontSize: 16, fontWeight: 700,
+            color: red ? t.suitRed : t.textOnCard,
+            fontFamily: t.fontCard, lineHeight: 1,
           }}>{card.rank}{card.suit}</span>
           <span
             onClick={e => { e.stopPropagation(); onRemove(); }}
             style={{
               position: "absolute", top: 3, right: 5,
-              fontSize: 11, color: t.textMuted, cursor: "pointer", lineHeight: 1,
+              fontSize: 11, color: "oklch(40% 0.020 80)", cursor: "pointer", lineHeight: 1,
             }}
           >✕</span>
         </>
       ) : (
-        <span style={{ fontSize: active ? 18 : 16, color: active ? t.accentYellow : t.textDisabled }}>
+        <span style={{ fontSize: active ? 18 : 16, color: active ? t.goldBright : t.textDisabled }}>
           {active ? "↓" : "·"}
         </span>
       )}
@@ -282,15 +343,19 @@ function SuitRow({ selectedRank, usedKeys, onPickSuit, t }) {
               key={suit}
               onClick={() => active && onPickSuit(suit)}
               style={{
-                height: "clamp(48px, 14vw, 56px)", borderRadius: 12, border: "none",
+                height: "clamp(48px, 14vw, 56px)", borderRadius: 10, border: "none",
                 background: active
                   ? (red ? t.redSuitBg : t.blueSuitBg)
-                  : t.surfaceSunken,
+                  : t.feltMid,
                 color: used
                   ? t.textDisabled
+                  // SuitRow is the one chrome exception to Suit Quarantine: the
+                  // suit glyph IS the affordance, so it must read as a suit.
+                  // Red suits keep their color; black suits use textPrimary
+                  // (suit-dark is authored for cream card faces, too dark here).
                   : active
-                    ? (red ? t.redCard : t.blueCard)
-                    : t.textDisabled,
+                    ? (red ? t.suitRed : t.textPrimary)
+                    : t.textMuted,
                 fontSize: 26,
                 cursor: active ? "pointer" : "default",
                 transition: "background 0.15s, color 0.15s",
@@ -311,8 +376,12 @@ function SuitRow({ selectedRank, usedKeys, onPickSuit, t }) {
 
 function ScorePanel({ result, t }) {
   const { total, log } = result;
-  const accentIdx = total >= 24 ? 0 : total >= 16 ? 1 : total >= 8 ? 2 : 3;
-  const accent = t.scoreAccents[accentIdx];
+  // High scores get celebrated; low scores stay neutral (red would imply
+  // the player did something wrong, but a low hand is often just the deal).
+  const accent = total >= 24 ? t.goldBright
+               : total >= 16 ? t.scorePositive
+               : total >= 8  ? t.textPrimary
+               : t.textSecondary;
   const label = total === 29 ? "🏆 Perfect 29!" : total === 0 ? "Zilch"
     : total >= 20 ? "Outstanding" : total >= 12 ? "Strong" : total >= 8 ? "Solid" : "Below average";
 
@@ -320,42 +389,50 @@ function ScorePanel({ result, t }) {
     <div style={{ padding: "16px 16px 24px" }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 14 }}>
         <span style={{
-          fontSize: 56, fontWeight: 900, lineHeight: 1, color: accent,
-          fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.02em",
+          fontSize: 56, fontWeight: 700, lineHeight: 1, color: accent,
+          fontFamily: t.fontMono, letterSpacing: "-0.02em",
         }}>{total}</span>
         {/* textSecondary on surfaceBg: dark #aeaeb2 on #1c1c1e=5.0:1✓ light #3a3a3c on #fff=13.4:1✓ */}
         <span style={{ fontSize: 14, color: t.textSecondary }}>{label}</span>
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-        {log.map((item, i) => (
-          <div key={i} style={{
-            display: "flex", alignItems: "center", gap: 10,
-            padding: "9px 12px", borderRadius: 10,
-            background: t.surfaceSunken,
-            border: `1px solid ${t.border}`,
-          }}>
-            {/* Badge: textPrimary on surfaceRaised — dark #f2f2f7 on #2c2c2e=12.0:1✓ light #1c1c1e on #e5e5ea=12.5:1✓ */}
-            <span style={{
-              minWidth: 34, height: 34, borderRadius: 8,
-              background: t.surfaceRaised, color: t.textPrimary,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontWeight: 800, fontSize: 13, flexShrink: 0,
-            }}>+{item.pts}</span>
-            {/* textPrimary on surfaceSunken — dark #f2f2f7 on #161618=14.7:1✓ light #1c1c1e on #f2f2f7=17.3:1✓ */}
-            <span style={{ fontSize: 13, color: t.textPrimary, flex: 1 }}>{item.reason}</span>
-            <div style={{ display: "flex", gap: 4, flexWrap: "wrap", justifyContent: "flex-end" }}>
-              {[...new Map(item.cards.map(c=>[cardKey(c),c])).values()].map(c => (
-                <span key={cardKey(c)} style={{
-                  fontSize: 12, fontWeight: 800,
-                  color: isRed(c.suit) ? t.redCard : t.blueCard,
-                  background: t.surfaceRaised,
-                  borderRadius: 5, padding: "2px 6px",
-                  fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.02em",
-                }}>{c.rank}{c.suit}</span>
-              ))}
+      {/* Score breakdown rows — v2 layout. Reason on top, cards-that-scored as
+          inline SF Mono sub-text, +N value right-aligned in SF Mono. */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {log.map((item, i) => {
+          const uniqueCards = [...new Map(item.cards.map(c => [cardKey(c), c])).values()];
+          return (
+            <div key={i} style={{
+              display: "flex", alignItems: "center", gap: 12,
+              padding: "10px 14px", borderRadius: 8,
+              background: t.feltMid, border: `1px solid ${t.feltRule}`,
+            }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                  fontSize: 13, fontWeight: 500, color: t.textSecondary, lineHeight: 1.3,
+                }}>{item.reason}</div>
+                {uniqueCards.length > 0 && (
+                  <div style={{
+                    display: "flex", gap: 6, flexWrap: "wrap",
+                    marginTop: 3, lineHeight: 1,
+                  }}>
+                    {uniqueCards.map((c, ci) => (
+                      <span key={cardKey(c) + "-" + ci} style={{
+                        fontFamily: t.fontMono, fontSize: 11, fontWeight: 500,
+                        color: isRed(c.suit) ? t.suitRed : t.textMuted,
+                        whiteSpace: "nowrap",
+                      }}>{c.rank}{c.suit}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <span style={{
+                fontFamily: t.fontMono,
+                fontSize: 16, fontWeight: 600,
+                color: t.scorePositive, lineHeight: 1, flexShrink: 0,
+              }}>+{item.pts}</span>
             </div>
-          </div>
-        ))}
+          );
+        })}
         {log.length === 0 && (
           <div style={{ color: t.textSecondary, fontSize: 13 }}>No scoring combinations</div>
         )}
