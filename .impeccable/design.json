@@ -1,0 +1,261 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-22T00:00:00.000Z",
+  "title": "Design System: Cribbage Helper",
+  "extensions": {
+    "colorMeta": {
+      "marker-gold": {
+        "role": "primary",
+        "displayName": "Marker Gold",
+        "canonical": "oklch(79% 0.155 82)",
+        "tonalRamp": [
+          "oklch(20% 0.040 82)",
+          "oklch(32% 0.070 82)",
+          "oklch(44% 0.100 82)",
+          "oklch(55% 0.125 82)",
+          "oklch(66% 0.145 82)",
+          "oklch(79% 0.155 82)",
+          "oklch(88% 0.110 82)",
+          "oklch(96% 0.040 82)"
+        ]
+      },
+      "late-night-charcoal": {
+        "role": "neutral",
+        "displayName": "Late-Night Charcoal",
+        "canonical": "oklch(15% 0.005 270)",
+        "tonalRamp": [
+          "oklch(15% 0.005 270)",
+          "oklch(22% 0.005 270)",
+          "oklch(30% 0.005 270)",
+          "oklch(40% 0.005 270)",
+          "oklch(55% 0.005 270)",
+          "oklch(70% 0.005 270)",
+          "oklch(85% 0.005 270)",
+          "oklch(96% 0.005 270)"
+        ]
+      },
+      "study-surface": {
+        "role": "neutral",
+        "displayName": "Study Surface",
+        "canonical": "oklch(22% 0.005 270)",
+        "tonalRamp": []
+      },
+      "raised-surface": {
+        "role": "neutral",
+        "displayName": "Raised Surface",
+        "canonical": "oklch(28% 0.005 270)",
+        "tonalRamp": []
+      },
+      "sunken-well": {
+        "role": "neutral",
+        "displayName": "Sunken Well",
+        "canonical": "oklch(18% 0.005 270)",
+        "tonalRamp": []
+      },
+      "quiet-divider": {
+        "role": "neutral",
+        "displayName": "Quiet Divider",
+        "canonical": "oklch(35% 0.005 270)",
+        "tonalRamp": []
+      },
+      "primary-ink": {
+        "role": "neutral",
+        "displayName": "Primary Ink",
+        "canonical": "oklch(96% 0.005 270)",
+        "tonalRamp": []
+      },
+      "secondary-ink": {
+        "role": "neutral",
+        "displayName": "Secondary Ink",
+        "canonical": "oklch(75% 0.005 270)",
+        "tonalRamp": []
+      },
+      "muted-ink": {
+        "role": "neutral",
+        "displayName": "Muted Ink",
+        "canonical": "oklch(52% 0.005 270)",
+        "tonalRamp": []
+      },
+      "heart-diamond-red": {
+        "role": "tertiary",
+        "displayName": "Heart-Diamond Red",
+        "canonical": "oklch(70% 0.18 25)",
+        "tonalRamp": []
+      },
+      "spade-club-blue": {
+        "role": "tertiary",
+        "displayName": "Spade-Club Blue",
+        "canonical": "oklch(78% 0.12 245)",
+        "tonalRamp": []
+      },
+      "card-cream": {
+        "role": "secondary",
+        "displayName": "Card Cream",
+        "canonical": "oklch(94% 0.012 75)",
+        "tonalRamp": []
+      },
+      "score-tier-1": {
+        "role": "secondary",
+        "displayName": "Score Tier 1 (Purple)",
+        "canonical": "oklch(72% 0.18 295)",
+        "tonalRamp": []
+      },
+      "score-tier-2": {
+        "role": "secondary",
+        "displayName": "Score Tier 2 (Red)",
+        "canonical": "oklch(70% 0.20 25)",
+        "tonalRamp": []
+      },
+      "score-tier-3": {
+        "role": "secondary",
+        "displayName": "Score Tier 3 (Orange)",
+        "canonical": "oklch(75% 0.17 50)",
+        "tonalRamp": []
+      },
+      "score-tier-4": {
+        "role": "secondary",
+        "displayName": "Score Tier 4 (Green)",
+        "canonical": "oklch(75% 0.15 160)",
+        "tonalRamp": []
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Score totals only. One instance per screen, dead center." },
+      "title": { "displayName": "Title", "purpose": "App header screen titles ('Cribbage Scorer', 'Cribbage Trainer')." },
+      "rank": { "displayName": "Rank", "purpose": "Playing card pip and rank-strip selector. Same voice on card and selector by design." },
+      "body": { "displayName": "Body", "purpose": "Score row reasons, button labels, in-context instruction copy." },
+      "label": { "displayName": "Label", "purpose": "Letterspaced uppercase labels for stat chips and section headers." }
+    },
+    "shadows": [
+      { "name": "card-rest", "value": "0 3px 8px rgba(0,0,0,0.45)", "purpose": "Default shadow under an unselected playing card." },
+      { "name": "card-lifted", "value": "0 8px 20px rgba(0,0,0,0.55), 0 0 0 2px #f5b800", "purpose": "Selected playing card. Higher, softer, with gold ring." },
+      { "name": "container-ambient", "value": "0 10px 40px rgba(0,0,0,0.4)", "purpose": "Desktop card container floating on the page canvas." }
+    ],
+    "motion": [
+      { "name": "ease-standard", "value": "cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Default ease-out for state transitions and panel slides." },
+      { "name": "duration-tap", "value": "150ms", "purpose": "Card lift, button background tint, small state shifts." },
+      { "name": "duration-panel", "value": "200ms", "purpose": "Nav drawer slide-in and overlay fade." }
+    ],
+    "breakpoints": [
+      { "name": "mobile", "value": "≤520px", "purpose": "Full-bleed card container, sticky dock, no border radius on outer shell." },
+      { "name": "desktop", "value": ">520px", "purpose": "480px max-width centered card with 18px radius and ambient shadow." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one CTA on a screen. Marker Gold, gets the action done.",
+      "html": "<button class=\"ds-btn-primary\">Discard <span aria-hidden=\"true\">→</span></button>",
+      "css": ".ds-btn-primary { background: #f5b800; color: #1c1c1e; font-family: system-ui, -apple-system, sans-serif; font-size: 13px; font-weight: 700; letter-spacing: normal; padding: 12px 16px; border: none; border-radius: 10px; cursor: pointer; transition: background 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-primary:hover { background: #ffc933; } .ds-btn-primary:focus-visible { outline: 2px solid #f5b800; outline-offset: 2px; } .ds-btn-primary:disabled { background: #2c2c2e; color: #6c6c70; cursor: not-allowed; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Non-CTA action. Sits next to a Primary, or stands alone for low-stakes choices.",
+      "html": "<button class=\"ds-btn-secondary\">Deal New Hand <span aria-hidden=\"true\">→</span></button>",
+      "css": ".ds-btn-secondary { background: #2c2c2e; color: #f2f2f7; font-family: system-ui, -apple-system, sans-serif; font-size: 13px; font-weight: 600; padding: 12px 16px; border: none; border-radius: 10px; cursor: pointer; transition: background 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-secondary:hover { background: #3a3a3c; } .ds-btn-secondary:focus-visible { outline: 2px solid #f5b800; outline-offset: 2px; }"
+    },
+    {
+      "name": "Rank Pill (Inactive)",
+      "kind": "chip",
+      "refersTo": "rank-pill",
+      "description": "One of 13 ranks in the rank strip. Tapped to add a card to the hand.",
+      "html": "<button class=\"ds-rank-pill\">5</button>",
+      "css": ".ds-rank-pill { background: #2c2c2e; color: #f2f2f7; font-family: 'Playfair Display', Georgia, serif; font-size: 15px; font-weight: 900; padding: 8px 6px; border: none; border-radius: 4px; min-width: 28px; cursor: pointer; transition: background 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-rank-pill:hover { background: #3a3a3c; }"
+    },
+    {
+      "name": "Rank Pill (Selected)",
+      "kind": "chip",
+      "refersTo": "rank-pill-selected",
+      "description": "The active rank in the rank strip. Marker Gold fill, dark text.",
+      "html": "<button class=\"ds-rank-pill-selected\">5</button>",
+      "css": ".ds-rank-pill-selected { background: #f5b800; color: #1c1c1e; font-family: 'Playfair Display', Georgia, serif; font-size: 15px; font-weight: 900; padding: 8px 6px; border: none; border-radius: 4px; min-width: 28px; cursor: pointer; }"
+    },
+    {
+      "name": "Playing Card",
+      "kind": "card",
+      "refersTo": "playing-card",
+      "description": "The signature object. Cream surface, serif rank, suit glyph center. Lifts on selection.",
+      "html": "<div class=\"ds-card\" role=\"button\" tabindex=\"0\"><div class=\"ds-card-corner ds-card-corner-tl\"><div class=\"ds-card-rank\">5</div><div class=\"ds-card-suit\">♦</div></div><span class=\"ds-card-center\">♦</span><div class=\"ds-card-corner ds-card-corner-br\"><div class=\"ds-card-rank\">5</div><div class=\"ds-card-suit\">♦</div></div></div>",
+      "css": ".ds-card { width: 54px; height: 78px; border-radius: 7px; background: #f5f0e8; color: #b91c1c; border: 2px solid rgba(0,0,0,0.15); box-shadow: 0 3px 8px rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1), border-color 150ms cubic-bezier(0.4, 0, 0.2, 1); user-select: none; } .ds-card:hover { transform: translateY(-2px); } .ds-card.selected, .ds-card:focus-visible { outline: none; border-color: #f5b800; box-shadow: 0 8px 20px rgba(0,0,0,0.55), 0 0 0 2px #f5b800; transform: translateY(-18px); } .ds-card-corner { position: absolute; line-height: 1.1; text-align: center; } .ds-card-corner-tl { top: 3px; left: 4px; } .ds-card-corner-br { bottom: 3px; right: 4px; transform: rotate(180deg); } .ds-card-rank { font-family: Georgia, serif; font-size: 14px; font-weight: 900; line-height: 1; } .ds-card-suit { font-size: 10px; line-height: 1.2; } .ds-card-center { font-size: 24px; line-height: 1; }"
+    },
+    {
+      "name": "Card Slot (Empty)",
+      "kind": "card",
+      "refersTo": "card-slot",
+      "description": "An empty slot in the Scorer waiting for a card. Sunken Well background, gold outline when active.",
+      "html": "<button class=\"ds-card-slot ds-card-slot-active\" aria-label=\"Add card\">+</button>",
+      "css": ".ds-card-slot { width: 54px; height: 78px; background: #161618; color: #6c6c70; border: 2px dashed #3a3a3c; border-radius: 10px; font-size: 20px; font-weight: 300; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: border-color 150ms cubic-bezier(0.4, 0, 0.2, 1), color 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-card-slot:hover { border-color: #6c6c70; color: #aeaeb2; } .ds-card-slot-active { border: 2px solid #f5b800; color: #f5b800; }"
+    },
+    {
+      "name": "Nav Drawer Item",
+      "kind": "nav",
+      "refersTo": "nav-drawer-item",
+      "description": "A row in the slide-in drawer. Active state uses Marker Gold tint + text — no side-stripe border.",
+      "html": "<a class=\"ds-nav-item ds-nav-item-active\" href=\"#\"><span class=\"ds-nav-icon\" aria-hidden=\"true\">🎓</span><span>Cribbage Trainer</span></a><a class=\"ds-nav-item\" href=\"#\"><span class=\"ds-nav-icon\" aria-hidden=\"true\">🃏</span><span>Scorer</span></a>",
+      "css": ".ds-nav-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: transparent; color: #f2f2f7; font-family: system-ui, -apple-system, sans-serif; font-size: 15px; font-weight: 600; text-decoration: none; border-radius: 10px; cursor: pointer; transition: background 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-nav-item:hover { background: rgba(245, 184, 0, 0.08); } .ds-nav-item-active { background: rgba(245, 184, 0, 0.12); color: #f5b800; } .ds-nav-icon { font-size: 18px; line-height: 1; }"
+    },
+    {
+      "name": "Stat Chip",
+      "kind": "custom",
+      "refersTo": "stat-chip",
+      "description": "Trainer header stat. Letterspaced uppercase label above a numeric value. No background.",
+      "html": "<div class=\"ds-stat\"><div class=\"ds-stat-label\">EFFICIENCY</div><div class=\"ds-stat-value\">94%</div></div>",
+      "css": ".ds-stat { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 8px 0; } .ds-stat-label { font-family: system-ui, -apple-system, sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #aeaeb2; line-height: 1; } .ds-stat-value { font-family: system-ui, -apple-system, sans-serif; font-size: 18px; font-weight: 800; color: #f2f2f7; line-height: 1; }"
+    },
+    {
+      "name": "Score Total",
+      "kind": "custom",
+      "refersTo": "score-total",
+      "description": "The single biggest moment in the app. Display-scale serif, color-tiered by hand value.",
+      "html": "<div class=\"ds-score-total\">24</div>",
+      "css": ".ds-score-total { font-family: 'Playfair Display', Georgia, serif; font-size: 56px; font-weight: 800; line-height: 1; color: #34d399; text-align: center; padding: 12px 0; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Study Companion",
+    "overview": "A pocket coach for serious cribbage players. The visual system is built around one premise: the user is here on purpose, holding the phone in one hand, running through hands deliberately. Every screen is a single decision space. Color stays out of the way until the math has a verdict to deliver. Typography honors the source material (real cards have serif ranks) without leaning into card-game cliché. Soft ambient depth throughout, never theatrical lift. The product side of the personality is Raycast's discipline (one task per screen, quiet chrome, the work is the foreground). The brand side is Duolingo's loop (small, repeated wins; the reward arrives at the moment of feedback, not before). This system explicitly rejects the green-felt Vegas table, the bubble-button mobile game, generic SaaS dashboards, and brutalist statement work.",
+    "keyCharacteristics": [
+      "Dark by default, light supported. The default user is studying on a phone after dinner.",
+      "One accent. Marker Gold is the only chromatic color in the chrome.",
+      "Serif for cards and totals, sans for chrome. The rank on a card and the score that came from those cards are the same typographic voice.",
+      "Mobile-thumb-first. Primary actions live in the bottom third; safe-area insets are non-negotiable.",
+      "Tactile components. 10–18px radii, generous padding, soft shadows. Friendly without being childish."
+    ],
+    "rules": [
+      { "name": "The One Voice Rule", "body": "Marker Gold appears on ≤10% of any given screen and on at most one logical region at a time. Its rarity is the point.", "section": "colors" },
+      { "name": "The Suit Quarantine Rule", "body": "Red and Blue suit colors exist on playing-card surfaces only, never on buttons, never on text, never on dividers.", "section": "colors" },
+      { "name": "The No-Pure-Black, No-Pure-White Rule", "body": "The darkest value is #111111; tinted neutrals throughout. Body text is never #fff on dark, never #000 on light.", "section": "colors" },
+      { "name": "The Serif-for-Substance Rule", "body": "Playfair is reserved for card ranks, score totals, app title. Sans handles everything else. The serif is a signal that the user is looking at game material, not UI.", "section": "typography" },
+      { "name": "The Letterspaced-Cap Label Rule", "body": "Small labels (≤11px) are always uppercase with 0.08em letter-spacing.", "section": "typography" },
+      { "name": "The Cards-Float, Chrome-Doesn't Rule", "body": "Only playing cards cast meaningful shadows. UI chrome is flat at rest and uses tonal layering for depth.", "section": "elevation" },
+      { "name": "The No-Hover-Lift Rule", "body": "Buttons do not translate up on hover. Hover changes background tint, never position.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use Marker Gold (#f5b800) at ≤10% per screen, on one logical region at a time.",
+      "Do use Playfair Display for card ranks, score totals, and the screen title. Sans-serif everywhere else.",
+      "Do keep the playing card's center suit glyph at 24–30px so it reads from arm's length.",
+      "Do show the suit glyph (♠♥♦♣) every time suit color is used, so color-blind users are never blocked.",
+      "Do treat the bottom of the mobile screen as primary real estate. Sticky dock, safe-area insets, primary actions within thumb reach.",
+      "Do use 10–12px radii on chrome and 7px on playing cards.",
+      "Do ease motion out with cubic-bezier(0.4, 0, 0.2, 1) over 150–200ms.",
+      "Do maintain WCAG AA contrast across both themes."
+    ],
+    "donts": [
+      "Don't use side-stripe borders as a colored accent on cards, list items, or nav items. The current NavDrawer active-item left stripe is a documented violation pending replacement.",
+      "Don't introduce a second chromatic chrome color. There is one accent (Marker Gold).",
+      "Don't use #000 or #fff for chrome.",
+      "Don't ship green felt, gold gradients, ornate borders, or any other Vegas-casino motif.",
+      "Don't ship cartoon mascots, rainbow celebrations, or bubble-button drop shadows.",
+      "Don't ship the hero-metric template.",
+      "Don't ship identical card grids of icon-plus-heading-plus-text.",
+      "Don't ship modal dialogs as a first-resort UI. The drawer pattern is the only overlay pattern the system commits to.",
+      "Don't translate buttons on hover. Hover shifts background tint only.",
+      "Don't use em dashes in copy.",
+      "Don't use gradient text or background-clip: text."
+    ]
+  }
+}
