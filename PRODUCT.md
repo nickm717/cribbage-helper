@@ -36,7 +36,7 @@ Voice: direct, second person, no jargon padding. "Discard 2 to the crib" — not
 
 1. **One task per screen.** Discard, or see results — never both at once. The Trainer's two-phase flow (pick → reveal) is the model: a clean decision space, then a clean feedback space, never mixed.
 2. **Feedback over decoration.** Motion, color shifts, and celebration appear only when tied to a real signal — got the optimal play, efficiency ticked up, a new hand is ready. Nothing animates for its own sake.
-3. **Card-game heritage, restrained.** Serif ranks (Playfair / Georgia) and tactile playing-card surfaces honor the source material. No felt, no green baize, no skeuomorphic ornament beyond what a real card actually has.
+3. **Card-game heritage, restrained.** Tactile playing-card surfaces (cream stock, suit glyphs, rounded corners) honor the source material. The app chrome around them stays modern and platform-native. No felt, no green baize, no skeuomorphic ornament beyond what a real card actually has.
 4. **Mobile-thumb-first.** Primary actions sit in the bottom third of the screen and respect safe-area insets. The sticky dock pattern is canonical: hand is always reachable, results scroll above it.
 5. **Earn the player's trust through math.** EV is deterministic — same six cards always produce the same optimal play. The app commits to one best discard per hand; it does not hedge, soften, or list "options." Confidence is the product.
 

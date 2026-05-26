@@ -155,14 +155,14 @@ function PlayingCard({ card, selected, dimmed, t }) {
     }}>
       {/* Top-left corner */}
       <div style={{ position: "absolute", top: 3, left: 4, lineHeight: 1.1, textAlign: "center" }}>
-        <div style={{ fontSize: card?.rank === "10" ? 12 : 14, fontWeight: 900, color: red ? "#b91c1c" : "#1c1c1e", fontFamily: "Georgia,serif", lineHeight: 1 }}>{card?.rank}</div>
+        <div style={{ fontSize: card?.rank === "10" ? 12 : 14, fontWeight: 900, color: red ? "#b91c1c" : "#1c1c1e", fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.01em", lineHeight: 1 }}>{card?.rank}</div>
         <div style={{ fontSize: 10, color: red ? "#b91c1c" : "#1c1c1e", lineHeight: 1.2 }}>{card?.suit}</div>
       </div>
       {/* Center suit */}
       <span style={{ fontSize: 24, color: red ? "#b91c1c" : "#1c1c1e", lineHeight: 1 }}>{card?.suit}</span>
       {/* Bottom-right corner (rotated) */}
       <div style={{ position: "absolute", bottom: 3, right: 4, lineHeight: 1.1, textAlign: "center", transform: "rotate(180deg)" }}>
-        <div style={{ fontSize: card?.rank === "10" ? 12 : 14, fontWeight: 900, color: red ? "#b91c1c" : "#1c1c1e", fontFamily: "Georgia,serif", lineHeight: 1 }}>{card?.rank}</div>
+        <div style={{ fontSize: card?.rank === "10" ? 12 : 14, fontWeight: 900, color: red ? "#b91c1c" : "#1c1c1e", fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.01em", lineHeight: 1 }}>{card?.rank}</div>
         <div style={{ fontSize: 10, color: red ? "#b91c1c" : "#1c1c1e", lineHeight: 1.2 }}>{card?.suit}</div>
       </div>
     </div>
@@ -210,7 +210,7 @@ function MiniCard({ card, t }) {
       fontSize: 11, fontWeight: 800,
       color: isRed(card.suit) ? t.redCard : t.blueCard,
       background: t.surfaceRaised, borderRadius: 4, padding: "2px 5px",
-      fontFamily: "Georgia,serif",
+      fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.01em",
     }}>{card.rank}{card.suit}</span>
   );
 }
@@ -219,7 +219,54 @@ function StatChip({ label, value, t }) {
   return (
     <div style={{ textAlign: "center" }}>
       <div style={{ fontSize: 9, color: t.textMuted, letterSpacing: 1, textTransform: "uppercase" }}>{label}</div>
-      <div style={{ fontSize: 14, fontWeight: 700, color: t.textPrimary, fontFamily: "Georgia,serif" }}>{value}</div>
+      <div style={{ fontSize: 14, fontWeight: 700, color: t.textPrimary, fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.01em" }}>{value}</div>
+    </div>
+  );
+}
+
+// SessionStatStrip: efficiency is the entire point of the Trainer, so it owns
+// the strip. Hands and points are demoted to a single secondary metadata line.
+// Tier color follows the score-tier palette (the only multi-color exception in
+// the system, per DESIGN.md). Compact vertical footprint: the strip aligns
+// label + metadata to the big number's baseline so the whole row is one line tall.
+function SessionStatStrip({ hands, yourPts, optPts, efficiency, t }) {
+  const hasData = hands > 0;
+  const tier = !hasData ? null
+    : efficiency >= 90 ? t.scoreAccents[3]  // green
+    : efficiency >= 75 ? t.scoreAccents[2]  // orange
+    : efficiency >= 60 ? t.scoreAccents[1]  // red
+    : t.scoreAccents[0];                    // purple
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      gap: 12, width: "100%",
+    }}>
+      <div style={{ display: "flex", flexDirection: "column", minWidth: 0, gap: 2 }}>
+        <div style={{
+          fontSize: 9, fontWeight: 700, color: t.textMuted,
+          letterSpacing: "0.12em", textTransform: "uppercase", lineHeight: 1,
+        }}>
+          Session Efficiency
+        </div>
+        <div style={{
+          fontSize: 12, color: t.textSecondary, lineHeight: 1.1,
+          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+        }}>
+          {hasData
+            ? <>{hands} hand{hands === 1 ? "" : "s"} <span style={{ color: t.textMuted }}>·</span> {yourPts}/{optPts} pts</>
+            : <>Play a hand to start tracking</>}
+        </div>
+      </div>
+      <div style={{
+        fontFamily: "system-ui, -apple-system, sans-serif",
+        fontSize: 30, fontWeight: 800, lineHeight: 1,
+        color: hasData ? tier : t.textMuted,
+        letterSpacing: "-0.03em",
+        fontVariantNumeric: "tabular-nums",
+        flexShrink: 0,
+      }}>
+        {hasData ? `${efficiency}%` : "—"}
+      </div>
     </div>
   );
 }
@@ -253,7 +300,7 @@ function EVCell({ label, value, t }) {
   return (
     <div style={{ background: t.surfaceSunken, borderRadius: 8, padding: "8px 10px" }}>
       <div style={{ fontSize: 9, color: t.textMuted, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 2 }}>{label}</div>
-      <div style={{ fontSize: 18, fontWeight: 800, color: t.textPrimary, fontFamily: "Georgia,serif" }}>{value}</div>
+      <div style={{ fontSize: 18, fontWeight: 800, color: t.textPrimary, fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.01em" }}>{value}</div>
     </div>
   );
 }
@@ -295,15 +342,47 @@ function PhaseStrip({ phase, t }) {
 
 // ─── Body sections ───────────────────────────────────────────────────────────
 
-function DiscardBody({ selected, t }) {
-  const remaining = 2 - selected.length;
+// CribDestination: the headline of the discard phase. Names whose crib gets
+// the cards in plain language (no "dealer" / "pone" jargon) and adds one
+// strategic hint so a newer player learns the implication. Progress through
+// the selection ("Select 2 more cards" → "Discard →") is shown by the dock
+// button, not here, so One Voice (gold) stays uncontested in this region.
+function CribDestination({ isDealer, t }) {
+  const owner = isDealer ? "Your crib" : "Opponent's crib";
+  const implication = isDealer
+    ? "These two cards score for you"
+    : "These two cards score for them";
   return (
-    <div style={{ textAlign: "center", color: t.textSecondary, fontSize: 14, paddingTop: 32, paddingBottom: 8 }}>
-      {remaining > 0
-        ? `Select ${remaining} card${remaining === 1 ? "" : "s"} to discard to the crib`
-        : "Tap Discard to lock in your choice"}
+    <div style={{
+      textAlign: "center",
+      paddingTop: 28,
+      paddingBottom: 8,
+      display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+    }}>
+      <div style={{
+        fontSize: 9, fontWeight: 700, color: t.textMuted,
+        letterSpacing: "0.12em", textTransform: "uppercase", lineHeight: 1,
+      }}>
+        Discarding to
+      </div>
+      <div style={{
+        fontSize: 26, fontWeight: 800, color: t.textPrimary,
+        letterSpacing: "-0.01em", lineHeight: 1.1,
+      }}>
+        {owner}
+      </div>
+      <div style={{
+        fontSize: 13, color: t.textSecondary, lineHeight: 1.3,
+        marginTop: 2, maxWidth: 280,
+      }}>
+        {implication}
+      </div>
     </div>
   );
+}
+
+function DiscardBody({ isDealer, t }) {
+  return <CribDestination isDealer={isDealer} t={t} />;
 }
 
 function ScoreBody({ feedback, kept, cut, handResult, cribResult, optHandResult, optResult, isDealer, session, t }) {
@@ -338,7 +417,7 @@ function ScoreBody({ feedback, kept, cut, handResult, cribResult, optHandResult,
             <div style={{ fontSize: 12, color: t.textSecondary }}>
               Optimal keep:{" "}
               {feedback.optKeep.map(c => (
-                <span key={cardKey(c)} style={{ color: isRed(c.suit) ? t.redCard : t.blueCard, fontWeight: 700, marginRight: 4, fontFamily: "Georgia,serif" }}>
+                <span key={cardKey(c)} style={{ color: isRed(c.suit) ? t.redCard : t.blueCard, fontWeight: 700, marginRight: 4, fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.01em" }}>
                   {c.rank}{c.suit}
                 </span>
               ))}
@@ -360,7 +439,7 @@ function ScoreBody({ feedback, kept, cut, handResult, cribResult, optHandResult,
             </>}
           </div>
           {/* Score total */}
-          <div style={{ fontSize: 40, fontWeight: 900, color: t.accentYellow, fontFamily: "Georgia,serif", lineHeight: 1, marginBottom: 10 }}>
+          <div style={{ fontSize: 40, fontWeight: 900, color: t.accentYellow, fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.01em", lineHeight: 1, marginBottom: 10 }}>
             {handResult.total} pts
           </div>
           {/* Breakdown */}
@@ -370,7 +449,7 @@ function ScoreBody({ feedback, kept, cut, handResult, cribResult, optHandResult,
           {optResult && optHandResult && optHandResult.total !== handResult.total && (
             <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${t.border}`, fontSize: 13, color: t.textSecondary }}>
               Optimal keep would have scored{" "}
-              <span style={{ color: "#fb923c", fontWeight: 700, fontFamily: "Georgia,serif" }}>{optHandResult.total} pts</span>
+              <span style={{ color: "#fb923c", fontWeight: 700, fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.01em" }}>{optHandResult.total} pts</span>
             </div>
           )}
         </SectionBlock>
@@ -379,7 +458,7 @@ function ScoreBody({ feedback, kept, cut, handResult, cribResult, optHandResult,
       {/* Crib score (dealer only) */}
       {isDealer && cribResult && (
         <SectionBlock title="Your Crib" t={t}>
-          <div style={{ fontSize: 32, fontWeight: 900, color: t.textPrimary, fontFamily: "Georgia,serif", lineHeight: 1, marginBottom: 10 }}>
+          <div style={{ fontSize: 32, fontWeight: 900, color: t.textPrimary, fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.01em", lineHeight: 1, marginBottom: 10 }}>
             {cribResult.total} pts
           </div>
           {cribResult.log.map((item, i) => <ScoreLogRow key={i} item={item} t={t} />)}
@@ -404,7 +483,7 @@ function ScoreBody({ feedback, kept, cut, handResult, cribResult, optHandResult,
             borderRadius: 6, transition: "width 0.6s ease-out",
           }} />
         </div>
-        <div style={{ fontSize: 28, fontWeight: 800, color: effColor, fontFamily: "Georgia,serif" }}>{eff}%</div>
+        <div style={{ fontSize: 28, fontWeight: 800, color: effColor, fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.01em" }}>{eff}%</div>
       </SectionBlock>
 
     </div>
@@ -513,36 +592,25 @@ export default function TrainerScreen({ t }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: t.surfaceBg }}>
 
-      {/* ── Top bar ─────────────────────────────────────────────────────── */}
+      {/* ── Top bar: efficiency-forward session header ──────────────────── */}
       <div style={{
         flexShrink: 0,
-        padding: "10px 16px",
+        padding: "8px 16px",
         background: t.surfaceBg, borderBottom: `1px solid ${t.border}`,
-        display: "flex", justifyContent: "space-between", alignItems: "center",
       }}>
-        <div style={{ display: "flex", gap: 20 }}>
-          <StatChip label="Hands" value={session.hands} t={t} />
-          <StatChip label="Efficiency" value={`${sessionEfficiency}%`} t={t} />
-        </div>
-        <div style={{ display: "flex", gap: 20 }}>
-          <StatChip label="Your pts" value={session.yourPts} t={t} />
-          <StatChip label="Opt pts" value={session.optPts} t={t} />
-        </div>
+        <SessionStatStrip
+          hands={session.hands}
+          yourPts={session.yourPts}
+          optPts={session.optPts}
+          efficiency={sessionEfficiency}
+          t={t}
+        />
       </div>
 
       {/* ── Scrollable body ──────────────────────────────────────────────── */}
       <div style={{ flex: 1, overflowY: "auto", padding: "14px 16px 8px", background: "#0e2318" }}>
 
-        {/* Role badge */}
-        <div style={{ textAlign: "center", marginBottom: 12 }}>
-          <span style={{
-            fontSize: 11, fontWeight: 700, color: t.accentYellow, letterSpacing: 1,
-            textTransform: "uppercase", background: t.accentYellow + "22",
-            borderRadius: 6, padding: "3px 10px",
-          }}>{isDealer ? "🃏 Dealer" : "🎴 Pone"}</span>
-        </div>
-
-        {phase === "discard" && <DiscardBody selected={selected} t={t} />}
+        {phase === "discard" && <DiscardBody isDealer={isDealer} t={t} />}
         {phase === "score" && (
           <ScoreBody
             feedback={feedback}
