@@ -5,8 +5,26 @@
 body {
   margin: 0;
   padding: 0;
+  background: #111111; /* matches dark pageBg — fills safe-area regions behind notch/home bar */
+}
+
+@media (prefers-color-scheme: light) {
+  body {
+    background: #f2f2f7; /* matches light pageBg */
+  }
 }
 
 #root {
   width: 100%;
+}
+
+/* Honor user motion preferences. Kills card lift, drawer slide, and button
+   tint transitions when the OS asks for reduced motion. Per PRODUCT.md a11y. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

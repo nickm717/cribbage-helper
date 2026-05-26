@@ -58,8 +58,8 @@ function scoreRuns(cards) {
 function scoreFlush(hand4, starter, isCrib) {
   const s = hand4[0]?.suit;
   if (!s || !hand4.every(c => c.suit === s)) return { pts: 0, log: [] };
-  if (starter?.suit === s) return { pts: 5, log: [{ pts: 5, reason: "Flush — 5 cards", cards: [...hand4, starter] }] };
-  if (!isCrib) return { pts: 4, log: [{ pts: 4, reason: "Flush — 4 cards", cards: hand4 }] };
+  if (starter?.suit === s) return { pts: 5, log: [{ pts: 5, reason: "Flush, 5 cards", cards: [...hand4, starter] }] };
+  if (!isCrib) return { pts: 4, log: [{ pts: 4, reason: "Flush, 4 cards", cards: hand4 }] };
   return { pts: 0, log: [] };
 }
 
@@ -401,7 +401,8 @@ function NavDrawer({ open, onClose, view, onNavigate, t }) {
         {/* Drawer header */}
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "20px 16px 16px",
+          paddingTop: "calc(20px + env(safe-area-inset-top))",
+          paddingBottom: 16, paddingLeft: 16, paddingRight: 16,
           borderBottom: `1px solid ${t.border}`,
         }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: t.textMuted, letterSpacing: 1, textTransform: "uppercase" }}>Menu</span>
@@ -411,8 +412,9 @@ function NavDrawer({ open, onClose, view, onNavigate, t }) {
             WebkitTapHighlightColor: "transparent",
           }}>✕</button>
         </div>
-        {/* Nav items */}
-        <div style={{ paddingTop: 8 }}>
+        {/* Nav items — active state uses Marker Gold tint + accent text only.
+            Per DESIGN.md "Don't" rule: no side-stripe borders. */}
+        <div style={{ paddingTop: 8, paddingLeft: 8, paddingRight: 8 }}>
           {NAV_ITEMS.map(item => {
             const active = view === item.id;
             return (
@@ -421,13 +423,10 @@ function NavDrawer({ open, onClose, view, onNavigate, t }) {
                 onClick={() => { onNavigate(item.id); onClose(); }}
                 style={{
                   display: "flex", alignItems: "center", gap: 12,
-                  width: "100%", padding: "13px 16px",
+                  width: "100%", padding: "14px 12px",
                   background: active ? `${t.accentYellow}1f` : "transparent",
-                  borderLeft: `3px solid ${active ? t.accentYellow : "transparent"}`,
                   border: "none",
-                  borderLeftStyle: "solid",
-                  borderLeftWidth: 3,
-                  borderLeftColor: active ? t.accentYellow : "transparent",
+                  borderRadius: 10,
                   color: active ? t.accentYellow : t.textPrimary,
                   fontSize: 15, fontWeight: active ? 700 : 500,
                   cursor: "pointer", textAlign: "left",
@@ -491,7 +490,11 @@ export default function CribbageCalculator() {
 
   return (
     <div style={{
-      minHeight: "100vh", background: t.pageBg,
+      // Mobile: exact viewport height so TrainerScreen's internal flex/overflow layout works
+      // Desktop: min-height for vertical centering with padding
+      height: isDesktop ? undefined : "100dvh",
+      minHeight: isDesktop ? "100vh" : undefined,
+      background: t.pageBg,
       fontFamily: "system-ui, -apple-system, sans-serif",
       display: "flex", flexDirection: "column",
       alignItems: "center",
@@ -500,7 +503,10 @@ export default function CribbageCalculator() {
     <div style={{
       width: "100%", maxWidth: 480,
       display: "flex", flexDirection: "column",
-      minHeight: isDesktop ? "auto" : "100vh",
+      // Mobile: flex:1 fills the exact height of the outer div (no overflow, no growth)
+      // Desktop: auto height, grows with content
+      flex: isDesktop ? undefined : 1,
+      minHeight: isDesktop ? "auto" : undefined,
       borderRadius: isDesktop ? 18 : 0,
       overflow: "hidden",
       boxShadow: isDesktop ? `0 8px 48px rgba(0,0,0,0.45), 0 1px 0 ${t.border}` : "none",
@@ -510,7 +516,9 @@ export default function CribbageCalculator() {
 
       {/* Header */}
       <div style={{
-        padding: "18px 16px 14px", background: t.surfaceBg,
+        paddingTop: isDesktop ? 18 : "calc(18px + env(safe-area-inset-top))",
+        paddingBottom: 14, paddingLeft: 16, paddingRight: 16,
+        background: t.surfaceBg,
         borderBottom: `1px solid ${t.border}`,
         display: "flex", alignItems: "center", gap: 12,
       }}>
@@ -593,11 +601,11 @@ export default function CribbageCalculator() {
 
       {/* Score */}
       {result ? (
-        <div style={{ background: t.surfaceBg, borderTop: `1px solid ${t.border}` }}>
+        <div style={{ background: t.surfaceBg, borderTop: `1px solid ${t.border}`, paddingBottom: "env(safe-area-inset-bottom)" }}>
           <ScorePanel result={result} t={t} />
         </div>
       ) : (
-        <div style={{ padding: "16px 16px 32px", textAlign: "center", color: t.textSecondary, fontSize: 13 }}>
+        <div style={{ padding: "16px 16px", paddingBottom: "calc(32px + env(safe-area-inset-bottom))", textAlign: "center", color: t.textSecondary, fontSize: 13 }}>
           {hand4.length === 0 ? "Pick 4 hand cards to score"
             : `${4 - hand4.length} more card${4 - hand4.length > 1 ? "s" : ""} needed`}
         </div>
