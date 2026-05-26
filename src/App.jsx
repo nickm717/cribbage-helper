@@ -211,7 +211,7 @@ function CardPill({ card, active, onClick, onRemove, t }) {
           <span style={{
             fontSize: 16, fontWeight: 800,
             color: red ? t.redCard : t.blueCard,
-            fontFamily: "'Playfair Display', Georgia, serif",
+            fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.02em",
             letterSpacing: -0.5,
           }}>{card.rank}{card.suit}</span>
           <span
@@ -321,7 +321,7 @@ function ScorePanel({ result, t }) {
       <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 14 }}>
         <span style={{
           fontSize: 56, fontWeight: 900, lineHeight: 1, color: accent,
-          fontFamily: "'Playfair Display', Georgia, serif",
+          fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.02em",
         }}>{total}</span>
         {/* textSecondary on surfaceBg: dark #aeaeb2 on #1c1c1e=5.0:1✓ light #3a3a3c on #fff=13.4:1✓ */}
         <span style={{ fontSize: 14, color: t.textSecondary }}>{label}</span>
@@ -350,7 +350,7 @@ function ScorePanel({ result, t }) {
                   color: isRed(c.suit) ? t.redCard : t.blueCard,
                   background: t.surfaceRaised,
                   borderRadius: 5, padding: "2px 6px",
-                  fontFamily: "'Playfair Display', Georgia, serif",
+                  fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.02em",
                 }}>{c.rank}{c.suit}</span>
               ))}
             </div>
@@ -534,7 +534,7 @@ export default function CribbageCalculator() {
         >☰</button>
         <h1 style={{
           margin: 0, fontSize: 20, fontWeight: 800, color: t.textPrimary,
-          fontFamily: "'Playfair Display', Georgia, serif",
+          fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.02em",
         }}>{view === "scorer" ? "Cribbage Scorer" : "Cribbage Trainer"}</h1>
       </div>
 

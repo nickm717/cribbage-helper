@@ -26,23 +26,23 @@ colors:
   page-white: "#ffffff"
 typography:
   display:
-    fontFamily: "'Playfair Display', Georgia, serif"
+    fontFamily: "system-ui, -apple-system, sans-serif"
     fontSize: "56px"
     fontWeight: 800
     lineHeight: 1
-    letterSpacing: "normal"
+    letterSpacing: "-0.02em"
   title:
-    fontFamily: "'Playfair Display', Georgia, serif"
+    fontFamily: "system-ui, -apple-system, sans-serif"
     fontSize: "20px"
     fontWeight: 800
     lineHeight: 1.1
-    letterSpacing: "normal"
+    letterSpacing: "-0.01em"
   rank:
-    fontFamily: "'Playfair Display', Georgia, serif"
+    fontFamily: "system-ui, -apple-system, sans-serif"
     fontSize: "16px"
     fontWeight: 900
     lineHeight: 1
-    letterSpacing: "normal"
+    letterSpacing: "-0.01em"
   body:
     fontFamily: "system-ui, -apple-system, sans-serif"
     fontSize: "13px"
@@ -127,7 +127,7 @@ This system explicitly rejects four neighboring aesthetics: the green-felt Vegas
 **Key Characteristics:**
 - Dark by default, light supported. The default user is studying on a phone after dinner, room dimmed; the dark canvas is where the cards read best.
 - One accent. Marker Gold (#f5b800) is the only chromatic color in the chrome. Suit reds and blues live only on cards, not on UI.
-- Serif for cards and totals, sans for chrome. The rank on a card and the score that came from those cards are the same typographic voice.
+- One typographic family. The platform's own sans (SF Pro on Apple, Roboto on Android). Hierarchy lives in weight and scale, never in family contrast.
 - Mobile-thumb-first. Primary actions live in the bottom third; safe-area insets are non-negotiable.
 - Tactile components. 10–18px radii, generous padding, soft shadows. Friendly without being childish.
 
@@ -177,22 +177,24 @@ A near-monochrome chrome (tinted charcoals in dark mode, tinted whites in light)
 
 ## 3. Typography
 
-**Display Font:** 'Playfair Display' (with Georgia, serif fallback)
-**Body Font:** system-ui, -apple-system, sans-serif
-**Card Rank:** Playfair Display 900 — same family as Display, different weight
+**One family, the platform's own.** `system-ui, -apple-system, sans-serif` resolves to SF Pro on iOS and macOS, Roboto on Android, Segoe UI on Windows. Zero font load, zero FOUT, and the app reads as native on each device. This is what Raycast, Arc, and Linear all do; it's the modern-app default, not a fallback.
 
-**Character:** A serif that knows it's a serif (Playfair has high stroke contrast and elegant ball terminals) paired with the platform's native sans. The serif appears wherever the product is being a card game — card ranks, score totals, screen titles. Sans handles everything else. The contrast is the point: when serif appears, something cardish is happening.
+**Character:** Hierarchy comes from scale and weight, not from family contrast. The display sizes lean on negative letter-spacing (-0.02em to -0.03em) to keep big numerals tight and intentional. Numerals in stat strips use `font-variant-numeric: tabular-nums` so values don't shift width as digits change (87% → 100% holds its column).
 
 ### Hierarchy
-- **Display** (Playfair 800, 56px, line-height 1): The score total. The single biggest moment in the app. Appears once per screen, dead center, color-tiered by value.
-- **Title** (Playfair 800, 20px, line-height 1.1): App header title ("Cribbage Scorer" / "Cribbage Trainer"). Sits left of the hamburger.
-- **Rank** (Playfair 900, 14–16px depending on context): The rank pip on a playing card and on the rank-strip selector. Identical typographic voice across the whole app — a 5 on the rank strip is the same 5 you'll see on the card it produces.
-- **Body** (system sans, 13px, weight 600, line-height 1.4): Score row reasons, in-context instruction copy, button labels.
-- **Label** (system sans, 9–11px, weight 700, letter-spacing 0.08em, uppercase): Trainer stat chips ("HANDS", "EFFICIENCY"), section labels, role tags like "DEALER".
+- **Display** (800, 56px, letter-spacing -0.02em, line-height 1): The score total. The single biggest moment in the app. Appears once per screen, dead center, color-tiered by value.
+- **Title** (800, 20px, letter-spacing -0.01em, line-height 1.1): App header title ("Cribbage Scorer" / "Cribbage Trainer"). Sits left of the hamburger.
+- **Rank** (900, 14–16px depending on context, letter-spacing -0.01em): The rank pip on a playing card and on the rank-strip selector. The heaviest weight in the system; a rank glyph should read as denser than any UI chrome around it.
+- **Body** (600, 13px, line-height 1.4): Score row reasons, in-context instruction copy, button labels.
+- **Label** (700, 9–11px, letter-spacing 0.08em, uppercase): Trainer stat chips ("EFFICIENCY"), section labels, role tags like "DEALER".
 
 ### Named Rules
 
-**The Serif-for-Substance Rule.** Playfair is reserved for: card ranks, score totals, app title. Sans handles everything else. Never use serif for button labels, instruction copy, or chrome. The serif is a signal that the user is looking at game material, not UI.
+**The One-Family Rule.** The entire app uses the system sans stack. No web fonts, no Google Fonts, no serif. Hierarchy is built from weight (400 → 600 → 800 → 900, ≥1.5× ratio steps) and scale (9px label → 13px body → 20px title → 56px display, ≥1.5× ratio steps). Family contrast is not in the vocabulary.
+
+**The Tabular-Nums Rule.** Any numeric value that updates in place (efficiency percentage, session points, score total during a flip) uses `font-variant-numeric: tabular-nums`. Variable-width digits make numbers dance; tabular numerals make them feel like instrumentation.
+
+**The Negative-Letter-Spacing-On-Display Rule.** Display sizes (≥30px) carry -0.02em or -0.03em letter-spacing. At the system stack's default tracking, large numbers and short headers feel loose; tightening them makes the display weight read as deliberate.
 
 **The Letterspaced-Cap Label Rule.** Small labels (≤11px) are always uppercase with 0.08em letter-spacing. Sentence-case small text reads as cramped body text; uppercase letterspacing makes it read as a label.
 
@@ -261,7 +263,9 @@ The system is **softly layered, not flat**. Depth comes from two sources used to
 
 ### Do:
 - **Do** use Marker Gold (#f5b800) at ≤10% per screen, on one logical region at a time.
-- **Do** use Playfair Display for card ranks, score totals, and the screen title. Sans-serif everywhere else.
+- **Do** use the system sans stack (`system-ui, -apple-system, sans-serif`) for the entire app. Hierarchy through weight (400 / 600 / 800 / 900) and scale, never family contrast.
+- **Do** apply `font-variant-numeric: tabular-nums` to any number that updates in place (efficiency %, session points).
+- **Do** tighten display sizes (≥30px) with -0.02em to -0.03em letter-spacing.
 - **Do** keep the playing card's center suit glyph at 24–30px so it reads from arm's length.
 - **Do** show the suit glyph (♠♥♦♣) every time suit color is used, so color-blind users are never blocked.
 - **Do** treat the bottom of the mobile screen as primary real estate. Sticky dock, safe-area insets, primary actions within thumb reach.
