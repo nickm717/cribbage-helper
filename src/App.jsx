@@ -284,9 +284,7 @@ function CardPill({ card, active, onClick, onRemove, t }) {
           >✕</span>
         </>
       ) : (
-        <span style={{ fontSize: active ? 18 : 16, color: active ? t.goldBright : t.textDisabled }}>
-          {active ? "↓" : "·"}
-        </span>
+        <span style={{ fontSize: 16, color: active ? t.goldBright : t.textDisabled }}>·</span>
       )}
     </button>
   );
@@ -624,12 +622,6 @@ export default function CribbageCalculator() {
         borderBottom: `1px solid ${t.border}`,
       }}>
         <div style={{ display: "flex", gap: 5, marginBottom: 10 }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 4, width: 52, flexShrink: 0 }}>
-            {/* textMuted label — decorative only, not relied on for info */}
-            <span style={{ fontSize: 9, color: t.textMuted, letterSpacing: 1, textTransform: "uppercase", textAlign: "center" }}>Cut</span>
-            <CardPill card={slots[0]} active={activeSlot === 0} onClick={() => pickSlot(0)} onRemove={() => removeCard(0)} t={t} />
-          </div>
-          <div style={{ width: 1, background: t.border, margin: "14px 0 0", alignSelf: "stretch" }} />
           <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
             <span style={{ fontSize: 9, color: t.textMuted, letterSpacing: 1, textTransform: "uppercase" }}>Hand</span>
             <div style={{ display: "flex", gap: 5 }}>
@@ -637,6 +629,12 @@ export default function CribbageCalculator() {
                 <CardPill key={i} card={slots[i]} active={activeSlot === i} onClick={() => pickSlot(i)} onRemove={() => removeCard(i)} t={t} />
               ))}
             </div>
+          </div>
+          <div style={{ width: 1, background: t.border, margin: "14px 0 0", alignSelf: "stretch" }} />
+          <div style={{ display: "flex", flexDirection: "column", gap: 4, width: 52, flexShrink: 0 }}>
+            {/* textMuted label — decorative only, not relied on for info */}
+            <span style={{ fontSize: 9, color: t.textMuted, letterSpacing: 1, textTransform: "uppercase", textAlign: "center" }}>Cut</span>
+            <CardPill card={slots[0]} active={activeSlot === 0} onClick={() => pickSlot(0)} onRemove={() => removeCard(0)} t={t} />
           </div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
