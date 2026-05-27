@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { cardValue, rankIdx, isRed, cardKey, fullDeck, combos, scoreFifteens, scorePairs, scoreRuns, scoreFlush, scoreNobs, scoreNibs, scoreHand, evHand, evCrib, bestKeep, analyzeHand } from "./engine.js";
 
 // ─── History persistence ─────────────────────────────────────────────────────
 
@@ -35,139 +36,6 @@ function saveHandToHistory(grade, yourPts, optPts) {
     sessions.push(entry);
   }
   localStorage.setItem("cribbage_history", JSON.stringify(sessions));
-}
-
-// ─── Shared game logic ──────────────────────────────────────────────────────
-
-const RANKS = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
-const SUITS = ["♠","♥","♦","♣"];
-
-function cardValue(r) {
-  if (r === "A") return 1;
-  if (["J","Q","K"].includes(r)) return 10;
-  return parseInt(r);
-}
-function rankIdx(r) { return RANKS.indexOf(r); }
-function isRed(s) { return s === "♥" || s === "♦"; }
-function cardKey(c) { return c.rank + c.suit; }
-function fullDeck() { return SUITS.flatMap(s => RANKS.map(r => ({ rank: r, suit: s }))); }
-
-function combos(arr, size) {
-  if (size === 0) return [[]];
-  if (arr.length < size) return [];
-  const [first, ...rest] = arr;
-  return [...combos(rest, size - 1).map(c => [first, ...c]), ...combos(rest, size)];
-}
-
-function scoreFifteens(cards) {
-  let pts = 0, log = [];
-  for (let sz = 2; sz <= 5; sz++)
-    combos(cards, sz).forEach(combo => {
-      if (combo.reduce((s, c) => s + cardValue(c.rank), 0) === 15)
-        { pts += 2; log.push({ pts: 2, reason: "Fifteen", cards: combo }); }
-    });
-  return { pts, log };
-}
-function scorePairs(cards) {
-  let pts = 0, raw = [];
-  combos(cards, 2).forEach(([a, b]) => { if (a.rank === b.rank) { pts += 2; raw.push([a, b]); } });
-  if (!pts) return { pts: 0, log: [] };
-  const uniq = raw.flatMap(p => p).filter((c, i, a) => a.findIndex(x => cardKey(x) === cardKey(c)) === i);
-  const n = pts / 2;
-  const reason = n === 1 ? "Pair" : n === 3 ? "Pair Royal (3 of a kind)" : "Double Pair Royal (4 of a kind)";
-  return { pts, log: [{ pts, reason, cards: uniq }] };
-}
-function scoreRuns(cards) {
-  let pts = 0, log = [];
-  for (let sz = 5; sz >= 3; sz--) {
-    const runs = [];
-    combos(cards, sz).forEach(combo => {
-      const idxs = combo.map(c => rankIdx(c.rank)).sort((a, b) => a - b);
-      if (idxs.every((v, i) => i === 0 || v === idxs[i - 1] + 1)) runs.push(combo);
-    });
-    if (runs.length) { runs.forEach(r => { pts += sz; log.push({ pts: sz, reason: `Run of ${sz}`, cards: r }); }); break; }
-  }
-  return { pts, log };
-}
-function scoreFlush(hand4, starter, isCrib) {
-  const s = hand4[0]?.suit;
-  if (!s || !hand4.every(c => c.suit === s)) return { pts: 0, log: [] };
-  if (starter?.suit === s) return { pts: 5, log: [{ pts: 5, reason: "Flush, 5 cards", cards: [...hand4, starter] }] };
-  if (!isCrib) return { pts: 4, log: [{ pts: 4, reason: "Flush, 4 cards", cards: hand4 }] };
-  return { pts: 0, log: [] };
-}
-function scoreNobs(hand4, starter) {
-  if (!starter) return { pts: 0, log: [] };
-  const j = hand4.find(c => c.rank === "J" && c.suit === starter.suit);
-  return j ? { pts: 1, log: [{ pts: 1, reason: "His Nobs (J matches cut suit)", cards: [j] }] } : { pts: 0, log: [] };
-}
-function scoreNibs(starter) {
-  return starter?.rank === "J"
-    ? { pts: 2, log: [{ pts: 2, reason: "His Nibs (cut card is a Jack)", cards: [starter] }] }
-    : { pts: 0, log: [] };
-}
-function scoreHand(hand4, starter, isCrib) {
-  const all5 = starter ? [...hand4, starter] : [...hand4];
-  const parts = [scoreFifteens(all5), scorePairs(all5), scoreRuns(all5),
-    scoreFlush(hand4, starter, isCrib), scoreNobs(hand4, starter), scoreNibs(starter)];
-  return { total: parts.reduce((s, p) => s + p.pts, 0), log: parts.flatMap(p => p.log) };
-}
-
-// ─── EV Computation ─────────────────────────────────────────────────────────
-//
-// Both functions are fully deterministic: same cards in → same EV out, every time.
-//
-// evHand: exact — averages over every possible cut card in the remaining deck.
-//
-// evCrib: deterministic stride-based sampling. The remaining deck is always in
-// the same order (fullDeck() is fixed). For each possible cut we stride through
-// opponent pairs at a fixed interval, giving ~15 samples per cut. With ~46 remaining
-// cards that's 46 × 15 ≈ 690 scoreHand calls per combo — fast and consistent.
-
-function evHand(h4, exclSet) {
-  // Exact: score against every remaining card as the cut, then average.
-  const rem = fullDeck().filter(c => !exclSet.has(cardKey(c)));
-  if (!rem.length) return 0;
-  return rem.reduce((s, c) => s + scoreHand(h4, c, false).total, 0) / rem.length;
-}
-
-function evCrib(d2, exclSet) {
-  // Deterministic: for each cut card, stride through opponent pairs at a fixed
-  // interval derived from deck size — no randomness, same result every call.
-  const rem = fullDeck().filter(c => !exclSet.has(cardKey(c)));
-  const n = rem.length;
-  if (n < 3) return 0;
-  const pairsPerCut = (n - 1) * (n - 2) / 2; // C(n-1, 2)
-  const stride = Math.max(1, Math.floor(pairsPerCut / 15)); // ~15 samples per cut
-  let total = 0, count = 0;
-  for (let ci = 0; ci < n; ci++) {
-    let pi = 0;
-    for (let oi = 0; oi < n; oi++) {
-      if (oi === ci) continue;
-      for (let oj = oi + 1; oj < n; oj++) {
-        if (oj === ci) continue;
-        if (pi % stride === 0) {
-          total += scoreHand([...d2, rem[oi], rem[oj]], rem[ci], true).total;
-          count++;
-        }
-        pi++;
-      }
-    }
-  }
-  return count > 0 ? total / count : 0;
-}
-
-function bestKeep(h6, isDealer) {
-  const exclSet = new Set(h6.map(cardKey));
-  let best = null, bestEV = -Infinity;
-  for (const keep of combos(h6, 4)) {
-    const discard = h6.filter(c => !keep.some(k => cardKey(k) === cardKey(c)));
-    const hEV = evHand(keep, exclSet);
-    const cEV = evCrib(discard, exclSet);
-    const ev = hEV + (isDealer ? 0.5 : -0.5) * cEV;
-    if (ev > bestEV) { bestEV = ev; best = { keep, discard, hEV, cEV, ev }; }
-  }
-  return best;
 }
 
 // ─── Card Components ─────────────────────────────────────────────────────────
@@ -467,7 +335,132 @@ function DiscardBody({ isDealer, t }) {
   return <CribDestination isDealer={isDealer} t={t} />;
 }
 
-function ScoreBody({ feedback, kept, cut, handResult, cribResult, optHandResult, optResult, isDealer, session, t }) {
+// ─── Discard analysis table ──────────────────────────────────────────────────
+
+function RankBadge({ rank, t }) {
+  const bg = rank >= 90 ? "oklch(30% 0.060 150 / 0.5)"
+    : rank >= 70 ? "oklch(30% 0.060 78 / 0.5)"
+    : rank >= 50 ? t.feltLift
+    : "oklch(28% 0.060 25 / 0.5)";
+  const color = rank >= 90 ? t.scorePositive
+    : rank >= 70 ? t.goldBright
+    : rank >= 50 ? t.textSecondary
+    : t.scoreMiss;
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", justifyContent: "center",
+      minWidth: 36, height: 22, borderRadius: 11,
+      background: bg, color, fontFamily: t.fontMono,
+      fontSize: 11, fontWeight: 700, letterSpacing: "-0.01em",
+      flexShrink: 0,
+    }}>{rank}</span>
+  );
+}
+
+function DiscardOptionRow({ option, isPlayerDiscard, isOptimal, t }) {
+  const border = isOptimal
+    ? `1px solid ${t.goldDim}`
+    : isPlayerDiscard
+    ? `1px solid ${t.textSecondary}`
+    : `1px solid ${t.feltRule}`;
+  const bg = isOptimal ? `linear-gradient(135deg, ${t.feltMid}, oklch(24% 0.045 90 / 0.6))` : t.feltMid;
+
+  return (
+    <div style={{
+      background: bg, border, borderRadius: 8,
+      padding: "10px 12px", display: "flex", flexDirection: "column", gap: 7,
+    }}>
+      {/* Top row: kept cards + rank badge */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", flex: 1 }}>
+          {option.keep.map(c => <MiniCard key={cardKey(c)} card={c} t={t} />)}
+        </div>
+        <RankBadge rank={option.rank} t={t} />
+      </div>
+      {/* Discard row */}
+      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+        <span style={{ fontSize: 9, color: t.textMuted, letterSpacing: "0.08em", textTransform: "uppercase", flexShrink: 0 }}>crib</span>
+        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", opacity: 0.6 }}>
+          {option.discard.map(c => <MiniCard key={cardKey(c)} card={c} t={t} />)}
+        </div>
+      </div>
+      {/* Stats row */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 4 }}>
+        {[
+          { label: "MIN", value: option.handMin },
+          { label: "AVG", value: option.handAvg.toFixed(1) },
+          { label: "MAX", value: option.handMax },
+          { label: "CRIB", value: option.cribAvg.toFixed(1) },
+          { label: "NET", value: option.combinedEV.toFixed(1) },
+        ].map(({ label, value }) => (
+          <div key={label} style={{ background: t.surfaceSunken, borderRadius: 6, padding: "5px 6px", textAlign: "center" }}>
+            <div style={{ fontSize: 8, color: t.textMuted, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 2 }}>{label}</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: label === "NET" ? t.goldBright : t.textPrimary, fontFamily: t.fontMono, letterSpacing: "-0.01em" }}>{value}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DiscardOptionsTable({ allOptions, discarded, optKeep, isDealer, t }) {
+  const [expanded, setExpanded] = useState(false);
+  if (!allOptions.length) return null;
+
+  const playerDiscardKey = discarded.map(cardKey).sort().join(",");
+  const optKeepKey = optKeep ? optKeep.map(cardKey).sort().join(",") : null;
+
+  return (
+    <div style={{ marginTop: 0 }}>
+      {/* Toggle header */}
+      <button
+        onClick={() => setExpanded(e => !e)}
+        style={{
+          width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+          background: t.feltMid, border: `1px solid ${t.feltRule}`, borderRadius: expanded ? "8px 8px 0 0" : 8,
+          padding: "10px 14px", cursor: "pointer",
+          WebkitTapHighlightColor: "transparent",
+          fontFamily: t.fontUi,
+        }}
+      >
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 2 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: t.textPrimary }}>
+            All Discard Options {expanded ? "▴" : "▾"}
+          </span>
+          <span style={{ fontSize: 10, color: t.textMuted, letterSpacing: "0.04em" }}>
+            Estimates for random opponent discards &amp; cut
+          </span>
+        </div>
+        <span style={{ fontSize: 11, color: t.textMuted, flexShrink: 0 }}>15 options</span>
+      </button>
+      {expanded && (
+        <div style={{
+          background: t.feltDeep, border: `1px solid ${t.feltRule}`, borderTop: "none",
+          borderRadius: "0 0 8px 8px", padding: "8px 8px 10px",
+          display: "flex", flexDirection: "column", gap: 6,
+        }}>
+          {allOptions.map((opt, i) => {
+            const optDiscardKey = opt.discard.map(cardKey).sort().join(",");
+            const isPlayerDiscard = optDiscardKey === playerDiscardKey;
+            const optKeepKeys = opt.keep.map(cardKey).sort().join(",");
+            const isOptimal = optKeepKey !== null && optKeepKeys === optKeepKey;
+            return (
+              <DiscardOptionRow
+                key={i}
+                option={opt}
+                isPlayerDiscard={isPlayerDiscard}
+                isOptimal={isOptimal}
+                t={t}
+              />
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ScoreBody({ feedback, kept, discarded, cut, handResult, cribResult, optHandResult, optResult, allOptions, isDealer, session, t }) {
   const gradeColor = !feedback ? t.accentYellow
     : feedback.grade === "Optimal" ? "#34d399"
     : feedback.grade === "Close" ? "#fb923c" : "#f87171";
@@ -569,6 +562,17 @@ function ScoreBody({ feedback, kept, cut, handResult, cribResult, optHandResult,
         <div style={{ fontFamily: t.fontMono, fontSize: 28, fontWeight: 700, color: effColor, letterSpacing: "-0.02em" }}>{eff}%</div>
       </SectionBlock>
 
+      {/* All discard options — collapsible analysis table */}
+      {allOptions.length > 0 && (
+        <DiscardOptionsTable
+          allOptions={allOptions}
+          discarded={discarded}
+          optKeep={feedback?.optKeep || null}
+          isDealer={isDealer}
+          t={t}
+        />
+      )}
+
     </div>
   );
 }
@@ -589,6 +593,7 @@ export default function TrainerScreen({ t }) {
   const [handResult, setHandResult] = useState(null);
   const [cribResult, setCribResult] = useState(null);
   const [optHandResult, setOptHandResult] = useState(null);
+  const [allOptions, setAllOptions] = useState([]);
 
   function dealNewHand() {
     const deck = [...fullDeck()].sort(() => Math.random() - 0.5);
@@ -598,6 +603,7 @@ export default function TrainerScreen({ t }) {
     setSelected([]); setKept([]); setDiscarded([]); setCut(null);
     setFeedback(null); setOptResult(null);
     setHandResult(null); setCribResult(null); setOptHandResult(null);
+    setAllOptions([]);
     setPhase("discard");
   }
 
@@ -648,6 +654,9 @@ export default function TrainerScreen({ t }) {
     // ── Score what the optimal keep would have gotten with this cut ────────
     const optH = scoreHand(opt.keep, cutCard, false);
 
+    // ── Full discard analysis — all 15 options ranked by combined EV ────────
+    const options = analyzeHand(hand6, isDealer);
+
     setFeedback(fb);
     setOptResult(opt);
     setKept(keptCards);
@@ -656,6 +665,7 @@ export default function TrainerScreen({ t }) {
     setHandResult(hResult);
     setCribResult(cResult);
     setOptHandResult(optH);
+    setAllOptions(options);
     setPhase("score");
   }
 
@@ -698,9 +708,10 @@ export default function TrainerScreen({ t }) {
         {phase === "score" && (
           <ScoreBody
             feedback={feedback}
-            kept={kept} cut={cut}
+            kept={kept} discarded={discarded} cut={cut}
             handResult={handResult} cribResult={cribResult}
             optHandResult={optHandResult} optResult={optResult}
+            allOptions={allOptions}
             isDealer={isDealer} session={session} t={t}
           />
         )}
