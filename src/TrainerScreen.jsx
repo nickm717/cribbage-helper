@@ -422,22 +422,6 @@ function ScoreLogRow({ item, t, accentGold = false }) {
   );
 }
 
-function PhaseStrip({ phase, t }) {
-  const phases = ["discard", "score"];
-  const cur = phases.indexOf(phase);
-  return (
-    <div style={{ display: "flex", gap: 3, padding: "8px 16px 0" }}>
-      {phases.map((p, i) => (
-        <div key={p} style={{
-          flex: 1, height: 4, borderRadius: 2,
-          background: i < cur ? t.accentYellow + "80" : i === cur ? t.accentYellow : t.surfaceRaised,
-          transition: "background 0.3s",
-        }} />
-      ))}
-    </div>
-  );
-}
-
 // ─── Body sections ───────────────────────────────────────────────────────────
 
 // CribDestination: the headline of the discard phase. Names whose crib gets
@@ -725,8 +709,6 @@ export default function TrainerScreen({ t }) {
 
       {/* ── Bottom dock — sticky ─────────────────────────────────────────── */}
       <div style={{ flexShrink: 0, background: t.surfaceBg, borderTop: `1px solid ${t.border}` }}>
-
-        <PhaseStrip phase={phase} t={t} />
 
         {/* Card shelf */}
         <div style={{
