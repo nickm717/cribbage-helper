@@ -224,17 +224,20 @@ function makeTheme(dark) {
 }
 
 function useTheme() {
-  const mq = typeof window !== "undefined"
+  const sysMq = typeof window !== "undefined"
     ? window.matchMedia("(prefers-color-scheme: dark)")
     : { matches: true };
-  const [dark, setDark] = useState(mq.matches);
+  const [sysDark, setSysDark] = useState(sysMq.matches);
+  const [override, setOverride] = useState(null);
   useEffect(() => {
     const m = window.matchMedia("(prefers-color-scheme: dark)");
-    const handler = e => setDark(e.matches);
-    m.addEventListener("change", handler);
-    return () => m.removeEventListener("change", handler);
+    const h = e => setSysDark(e.matches);
+    m.addEventListener("change", h);
+    return () => m.removeEventListener("change", h);
   }, []);
-  return makeTheme(dark);
+  const dark = override !== null ? override : sysDark;
+  const toggle = () => setOverride(o => (o === null ? !sysDark : !o));
+  return [makeTheme(dark), toggle];
 }
 
 function useIsDesktop() {
@@ -442,95 +445,155 @@ function ScorePanel({ result, t }) {
 // ─── Navigation ────────────────────────────────────────────────────────────
 
 const NAV_ITEMS = [
-  { id: "scorer",  label: "Scorer",           icon: "🃏" },
-  { id: "trainer", label: "Cribbage Trainer",  icon: "🎓" },
+  { id: "trainer",  label: "Trainer",  subtitle: "Practice discards & scoring",    icon: "🎓" },
+  { id: "scorer",   label: "Scorer",   subtitle: "Score any hand manually",         icon: "🃏" },
+  { id: "history",  label: "History",  subtitle: "Past sessions & efficiency",      icon: "📋" },
+  { id: "settings", label: "Settings", subtitle: "Rules variants & preferences",    icon: "⚙️" },
 ];
 
-function NavDrawer({ open, onClose, view, onNavigate, t }) {
+function TopBar({ view, dropdownOpen, onToggleDropdown, onThemeToggle, isDesktop, t }) {
+  const current = NAV_ITEMS.find(n => n.id === view);
   return (
-    <>
-      {/* Overlay */}
-      <div
-        onClick={onClose}
-        style={{
-          position: "fixed", inset: 0,
-          background: "rgba(0,0,0,0.5)",
-          opacity: open ? 1 : 0,
-          pointerEvents: open ? "auto" : "none",
-          transition: "opacity 200ms",
-          zIndex: 100,
-        }}
-      />
-      {/* Panel */}
-      <div style={{
-        position: "fixed", top: 0, left: 0, bottom: 0,
-        width: 260,
-        background: t.surfaceBg,
-        borderRight: `1px solid ${t.border}`,
-        transform: open ? "translateX(0)" : "translateX(-100%)",
-        transition: "transform 200ms ease-out",
-        zIndex: 101,
-        display: "flex", flexDirection: "column",
+    <div style={{
+      display: "flex", alignItems: "center",
+      paddingTop: isDesktop ? 18 : "calc(18px + env(safe-area-inset-top))",
+      paddingBottom: 14, paddingLeft: 16, paddingRight: 16,
+      background: t.surfaceBg,
+    }}>
+      <span style={{
+        fontSize: 20, fontWeight: 800, color: t.textPrimary,
         fontFamily: "system-ui, -apple-system, sans-serif",
-      }}>
-        {/* Drawer header */}
-        <div style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          paddingTop: "calc(20px + env(safe-area-inset-top))",
-          paddingBottom: 16, paddingLeft: 16, paddingRight: 16,
-          borderBottom: `1px solid ${t.border}`,
-        }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: t.textMuted, letterSpacing: 1, textTransform: "uppercase" }}>Menu</span>
-          <button onClick={onClose} style={{
-            background: "none", border: "none", cursor: "pointer",
-            color: t.textSecondary, fontSize: 18, lineHeight: 1, padding: "2px 4px",
-            WebkitTapHighlightColor: "transparent",
-          }}>✕</button>
-        </div>
-        {/* Nav items — active state uses Marker Gold tint + accent text only.
-            Per DESIGN.md "Don't" rule: no side-stripe borders. */}
-        <div style={{ paddingTop: 8, paddingLeft: 8, paddingRight: 8 }}>
-          {NAV_ITEMS.map(item => {
-            const active = view === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => { onNavigate(item.id); onClose(); }}
-                style={{
-                  display: "flex", alignItems: "center", gap: 12,
-                  width: "100%", padding: "14px 12px",
-                  background: active ? `${t.accentYellow}1f` : "transparent",
-                  border: "none",
-                  borderRadius: 10,
-                  color: active ? t.accentYellow : t.textPrimary,
-                  fontSize: 15, fontWeight: active ? 700 : 500,
-                  cursor: "pointer", textAlign: "left",
-                  transition: "background 0.12s",
-                  WebkitTapHighlightColor: "transparent",
-                }}
-              >
-                <span style={{ fontSize: 18 }}>{item.icon}</span>
-                <span>{item.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </>
+        letterSpacing: "-0.02em", lineHeight: 1, flexShrink: 0,
+      }}>121</span>
+
+      <div style={{ width: 1, height: 18, background: t.border, margin: "0 12px", flexShrink: 0 }} />
+
+      <button
+        onClick={onToggleDropdown}
+        style={{
+          display: "flex", alignItems: "center", gap: 5,
+          background: t.surfaceRaised, border: "none",
+          borderRadius: 8, padding: "6px 10px",
+          cursor: "pointer", flexShrink: 0,
+          WebkitTapHighlightColor: "transparent",
+        }}
+      >
+        <span style={{
+          fontSize: 15, fontWeight: 700, color: t.textPrimary,
+          fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.01em",
+        }}>{current?.label}</span>
+        <span style={{
+          fontSize: 10, color: t.textSecondary, lineHeight: 1,
+          display: "inline-block",
+          transform: dropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
+          transition: "transform 200ms ease-out",
+        }}>▾</span>
+      </button>
+
+      <div style={{ flex: 1 }} />
+
+      <button
+        onClick={onThemeToggle}
+        style={{
+          background: "none", border: "none", cursor: "pointer",
+          color: t.textSecondary, fontSize: 18, padding: "4px",
+          WebkitTapHighlightColor: "transparent",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          lineHeight: 1,
+        }}
+        aria-label="Toggle theme"
+      >☀</button>
+    </div>
   );
 }
 
-function TrainerScreen({ t }) {
-  return <TrainerScreenComponent t={t} />;
+function SectionDropdown({ view, onNavigate, t }) {
+  return (
+    <div style={{ background: t.surfaceBg }}>
+      {NAV_ITEMS.map((item, idx) => {
+        const active = view === item.id;
+        return (
+          <button
+            key={item.id}
+            onClick={() => onNavigate(item.id)}
+            style={{
+              display: "flex", alignItems: "center", gap: 14,
+              width: "100%", padding: "14px 16px",
+              background: active ? t.goldGlow : "transparent",
+              border: "none",
+              borderBottom: idx < NAV_ITEMS.length - 1 ? `1px solid ${t.border}` : "none",
+              cursor: "pointer", textAlign: "left",
+              WebkitTapHighlightColor: "transparent",
+            }}
+          >
+            <div style={{
+              width: 40, height: 40, borderRadius: 10, flexShrink: 0,
+              background: t.surfaceRaised,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 20,
+            }}>{item.icon}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{
+                fontSize: 15, fontWeight: 700, lineHeight: 1.2,
+                color: active ? t.accentYellow : t.textPrimary,
+                fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.01em",
+              }}>{item.label}</div>
+              <div style={{ fontSize: 13, color: t.textSecondary, marginTop: 2, lineHeight: 1.3 }}>
+                {item.subtitle}
+              </div>
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function HistoryScreen({ t }) {
+  return (
+    <div style={{
+      flex: 1, display: "flex", flexDirection: "column",
+      alignItems: "center", justifyContent: "center",
+      padding: 32, gap: 10, background: t.surfaceBg,
+    }}>
+      <div style={{ fontSize: 40 }}>📋</div>
+      <div style={{
+        fontSize: 20, fontWeight: 800, color: t.textPrimary,
+        fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.01em",
+      }}>History</div>
+      <div style={{ fontSize: 13, color: t.textSecondary, textAlign: "center", maxWidth: 260, lineHeight: 1.5 }}>
+        Past sessions and efficiency tracking coming soon.
+      </div>
+    </div>
+  );
+}
+
+function SettingsScreen({ t }) {
+  return (
+    <div style={{
+      flex: 1, display: "flex", flexDirection: "column",
+      alignItems: "center", justifyContent: "center",
+      padding: 32, gap: 10, background: t.surfaceBg,
+    }}>
+      <div style={{ fontSize: 40 }}>⚙️</div>
+      <div style={{
+        fontSize: 20, fontWeight: 800, color: t.textPrimary,
+        fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.01em",
+      }}>Settings</div>
+      <div style={{ fontSize: 13, color: t.textSecondary, textAlign: "center", maxWidth: 260, lineHeight: 1.5 }}>
+        Rules variants and preferences coming soon.
+      </div>
+    </div>
+  );
 }
 
 // ─── App ───────────────────────────────────────────────────────────────────
 
 export default function CribbageCalculator() {
-  const t = useTheme();
+  const [t, toggleTheme] = useTheme();
   const isDesktop = useIsDesktop();
-  const [view, setView] = useState("scorer");
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [view, setView] = useState("trainer");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [slots, setSlots] = useState(Array(5).fill(null));
   const [activeSlot, setActiveSlot] = useState(0);
   const [selectedRank, setSelectedRank] = useState(null);
@@ -565,8 +628,6 @@ export default function CribbageCalculator() {
 
   return (
     <div style={{
-      // Mobile: exact viewport height so TrainerScreen's internal flex/overflow layout works
-      // Desktop: min-height for vertical centering with padding
       height: isDesktop ? undefined : "100dvh",
       minHeight: isDesktop ? "100vh" : undefined,
       background: t.pageBg,
@@ -575,126 +636,144 @@ export default function CribbageCalculator() {
       alignItems: "center",
       padding: isDesktop ? "48px 20px 64px" : 0,
     }}>
-    <div style={{
-      width: "100%", maxWidth: 480,
-      display: "flex", flexDirection: "column",
-      // Mobile: flex:1 fills the exact height of the outer div (no overflow, no growth)
-      // Desktop: auto height, grows with content
-      flex: isDesktop ? undefined : 1,
-      minHeight: isDesktop ? "auto" : undefined,
-      borderRadius: isDesktop ? 18 : 0,
-      overflow: "hidden",
-      boxShadow: isDesktop ? `0 8px 48px rgba(0,0,0,0.45), 0 1px 0 ${t.border}` : "none",
-      border: isDesktop ? `1px solid ${t.border}` : "none",
-      background: t.surfaceBg,
-    }}>
-
-      {/* Header */}
       <div style={{
-        paddingTop: isDesktop ? 18 : "calc(18px + env(safe-area-inset-top))",
-        paddingBottom: 14, paddingLeft: 16, paddingRight: 16,
+        width: "100%", maxWidth: 480,
+        display: "flex", flexDirection: "column",
+        flex: isDesktop ? undefined : 1,
+        minHeight: isDesktop ? "auto" : undefined,
+        borderRadius: isDesktop ? 18 : 0,
+        overflow: "hidden",
+        boxShadow: isDesktop ? `0 8px 48px rgba(0,0,0,0.45), 0 1px 0 ${t.border}` : "none",
+        border: isDesktop ? `1px solid ${t.border}` : "none",
         background: t.surfaceBg,
-        borderBottom: `1px solid ${t.border}`,
-        display: "flex", alignItems: "center", gap: 12,
       }}>
-        <button
-          onClick={() => setDrawerOpen(true)}
-          style={{
-            background: "none", border: "none", cursor: "pointer",
-            color: t.textPrimary, fontSize: 20, lineHeight: 1,
-            padding: "2px 4px", flexShrink: 0,
-            WebkitTapHighlightColor: "transparent",
-          }}
-          aria-label="Open menu"
-        >☰</button>
-        <h1 style={{
-          margin: 0, fontSize: 20, fontWeight: 800, color: t.textPrimary,
-          fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.02em",
-        }}>{view === "scorer" ? "Cribbage Scorer" : "Cribbage Trainer"}</h1>
-      </div>
 
-      {view === "trainer" && <TrainerScreen t={t} />}
+        {/* TopBar */}
+        <TopBar
+          view={view}
+          dropdownOpen={dropdownOpen}
+          onToggleDropdown={() => setDropdownOpen(o => !o)}
+          onThemeToggle={toggleTheme}
+          isDesktop={isDesktop}
+          t={t}
+        />
 
-      {view === "scorer" && <>
-      {/* Slot strip */}
-      <div style={{
-        background: t.surfaceBg, padding: "12px 16px",
-        borderBottom: `1px solid ${t.border}`,
-      }}>
-        <div style={{ display: "flex", gap: 5, marginBottom: 10 }}>
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
-            <span style={{ fontSize: 9, color: t.textMuted, letterSpacing: 1, textTransform: "uppercase" }}>Hand</span>
-            <div style={{ display: "flex", gap: 5 }}>
-              {[1,2,3,4].map(i => (
-                <CardPill key={i} card={slots[i]} active={activeSlot === i} onClick={() => pickSlot(i)} onRemove={() => removeCard(i)} t={t} />
-              ))}
+        {/* Topbar rule — always visible, separates header from page content */}
+        <div style={{ height: 1, background: t.border, flexShrink: 0 }} />
+
+        {/* Content area: flex 1, relative so dropdown can overlay it */}
+        <div style={{
+          flex: 1, position: "relative",
+          display: "flex", flexDirection: "column",
+          overflow: "hidden",
+        }}>
+
+          {/* Section dropdown overlay */}
+          {dropdownOpen && (
+            <>
+              {/* Scrim — dims content, click to close */}
+              <div
+                onClick={() => setDropdownOpen(false)}
+                style={{
+                  position: "absolute", inset: 0,
+                  background: "rgba(0,0,0,0.5)",
+                  zIndex: 9,
+                }}
+              />
+              {/* Dropdown panel */}
+              <div style={{
+                position: "absolute", top: 0, left: 0, right: 0,
+                zIndex: 10,
+                background: t.surfaceBg,
+                borderBottom: `1px solid ${t.border}`,
+              }}>
+                <SectionDropdown
+                  view={view}
+                  onNavigate={(id) => { setView(id); setDropdownOpen(false); }}
+                  t={t}
+                />
+              </div>
+            </>
+          )}
+
+          {/* Page content */}
+          {view === "trainer" && <TrainerScreenComponent t={t} />}
+
+          {view === "scorer" && (
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", overflowY: "auto" }}>
+              {/* Slot strip */}
+              <div style={{
+                background: t.surfaceBg, padding: "12px 16px",
+                borderBottom: `1px solid ${t.border}`, flexShrink: 0,
+              }}>
+                <div style={{ display: "flex", gap: 5, marginBottom: 10 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4, width: 52, flexShrink: 0 }}>
+                    <span style={{ fontSize: 9, color: t.textMuted, letterSpacing: 1, textTransform: "uppercase", textAlign: "center" }}>Cut</span>
+                    <CardPill card={slots[0]} active={activeSlot === 0} onClick={() => pickSlot(0)} onRemove={() => removeCard(0)} t={t} />
+                  </div>
+                  <div style={{ width: 1, background: t.border, margin: "14px 0 0", alignSelf: "stretch" }} />
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+                    <span style={{ fontSize: 9, color: t.textMuted, letterSpacing: 1, textTransform: "uppercase" }}>Hand</span>
+                    <div style={{ display: "flex", gap: 5 }}>
+                      {[1,2,3,4].map(i => (
+                        <CardPill key={i} card={slots[i]} active={activeSlot === i} onClick={() => pickSlot(i)} onRemove={() => removeCard(i)} t={t} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={randomize} style={{
+                    flex: 1, padding: "8px 0", borderRadius: 9,
+                    background: t.surfaceRaised, border: "none", cursor: "pointer",
+                    fontSize: 13, fontWeight: 600, color: t.textPrimary,
+                  }}>🎲 Random hand</button>
+                  <button onClick={clear} style={{
+                    padding: "8px 18px", borderRadius: 9,
+                    background: "transparent", border: `1px solid ${t.border}`,
+                    cursor: "pointer", fontSize: 13, color: t.textSecondary,
+                  }}>Clear</button>
+                </div>
+                <div style={{ display: "flex", gap: 0, marginTop: 10, borderRadius: 10, overflow: "hidden", border: `1px solid ${t.border}` }}>
+                  {["hand", "crib"].map(m => (
+                    <button key={m} onClick={() => setMode(m)} style={{
+                      flex: 1, padding: "9px 0", fontSize: 13, fontWeight: 700,
+                      background: mode === m ? t.accentYellow : t.surfaceRaised,
+                      color: mode === m ? t.textOnGold : t.textSecondary,
+                      border: "none", cursor: "pointer", textTransform: "capitalize",
+                      transition: "background 0.15s, color 0.15s",
+                      WebkitTapHighlightColor: "transparent",
+                    }}>{m === "hand" ? "Hand" : "Crib"}</button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Picker */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 0, padding: "14px 0 12px", flexShrink: 0 }}>
+                <div style={{ paddingBottom: 12 }}>
+                  <RankStrip selectedRank={selectedRank} usedKeys={usedKeys} onRankSelect={canPick ? pickRank : () => {}} t={t} />
+                </div>
+                <SuitRow selectedRank={selectedRank} usedKeys={usedKeys} onPickSuit={pickSuit} t={t} />
+              </div>
+
+              {/* Score */}
+              {result ? (
+                <div style={{ background: t.surfaceBg, borderTop: `1px solid ${t.border}`, paddingBottom: "env(safe-area-inset-bottom)" }}>
+                  <ScorePanel result={result} t={t} />
+                </div>
+              ) : (
+                <div style={{ padding: "16px 16px", paddingBottom: "calc(32px + env(safe-area-inset-bottom))", textAlign: "center", color: t.textSecondary, fontSize: 13 }}>
+                  {hand4.length === 0 ? "Pick 4 hand cards to score"
+                    : `${4 - hand4.length} more card${4 - hand4.length > 1 ? "s" : ""} needed`}
+                </div>
+              )}
             </div>
-          </div>
-          <div style={{ width: 1, background: t.border, margin: "14px 0 0", alignSelf: "stretch" }} />
-          <div style={{ display: "flex", flexDirection: "column", gap: 4, width: 52, flexShrink: 0 }}>
-            {/* textMuted label — decorative only, not relied on for info */}
-            <span style={{ fontSize: 9, color: t.textMuted, letterSpacing: 1, textTransform: "uppercase", textAlign: "center" }}>Cut</span>
-            <CardPill card={slots[0]} active={activeSlot === 0} onClick={() => pickSlot(0)} onRemove={() => removeCard(0)} t={t} />
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={randomize} style={{
-            flex: 1, padding: "8px 0", borderRadius: 9,
-            background: t.surfaceRaised, border: "none", cursor: "pointer",
-            fontSize: 13, fontWeight: 600, color: t.textPrimary,
-          }}>🎲 Random hand</button>
-          <button onClick={clear} style={{
-            padding: "8px 18px", borderRadius: 9,
-            background: "transparent", border: `1px solid ${t.border}`,
-            cursor: "pointer", fontSize: 13,
-            color: t.textSecondary,
-          }}>Clear</button>
-        </div>
+          )}
 
-        {/* Hand / Crib toggle */}
-        <div style={{ display: "flex", gap: 0, marginTop: 10, borderRadius: 10, overflow: "hidden", border: `1px solid ${t.border}` }}>
-          {["hand", "crib"].map(m => (
-            <button key={m} onClick={() => setMode(m)} style={{
-              flex: 1, padding: "9px 0", fontSize: 13, fontWeight: 700,
-              background: mode === m ? t.accentYellow : t.surfaceRaised,
-              color: mode === m ? (t.dark ? "#1c1c1e" : "#1c1c1e") : t.textSecondary,
-              border: "none", cursor: "pointer", textTransform: "capitalize",
-              transition: "background 0.15s, color 0.15s",
-              WebkitTapHighlightColor: "transparent",
-            }}>{m === "hand" ? "Hand" : "Crib"}</button>
-          ))}
+          {view === "history"  && <HistoryScreen  t={t} />}
+          {view === "settings" && <SettingsScreen t={t} />}
+
         </div>
       </div>
-
-      {/* Picker */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 0, padding: "14px 0 12px" }}>
-        <div style={{ paddingBottom: 12 }}>
-          <RankStrip selectedRank={selectedRank} usedKeys={usedKeys} onRankSelect={canPick ? pickRank : () => {}} t={t} />
-        </div>
-        <SuitRow selectedRank={selectedRank} usedKeys={usedKeys} onPickSuit={pickSuit} t={t} />
-      </div>
-
-      {/* Score */}
-      {result ? (
-        <div style={{ background: t.surfaceBg, borderTop: `1px solid ${t.border}`, paddingBottom: "env(safe-area-inset-bottom)" }}>
-          <ScorePanel result={result} t={t} />
-        </div>
-      ) : (
-        <div style={{ padding: "16px 16px", paddingBottom: "calc(32px + env(safe-area-inset-bottom))", textAlign: "center", color: t.textSecondary, fontSize: 13 }}>
-          {hand4.length === 0 ? "Pick 4 hand cards to score"
-            : `${4 - hand4.length} more card${4 - hand4.length > 1 ? "s" : ""} needed`}
-        </div>
-      )}
-      </>}
-
-    </div>
-    <NavDrawer
-      open={drawerOpen}
-      onClose={() => setDrawerOpen(false)}
-      view={view}
-      onNavigate={setView}
-      t={t}
-    />
     </div>
   );
 }
