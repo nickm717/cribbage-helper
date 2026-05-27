@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import TrainerScreenComponent from "./TrainerScreen.jsx";
+import HistoryScreen from "./HistoryScreen.jsx";
 
 // ─── Scoring Engine ────────────────────────────────────────────────────────
 
@@ -549,24 +550,6 @@ function SectionDropdown({ view, onNavigate, t }) {
   );
 }
 
-function HistoryScreen({ t }) {
-  return (
-    <div style={{
-      flex: 1, display: "flex", flexDirection: "column",
-      alignItems: "center", justifyContent: "center",
-      padding: 32, gap: 10, background: t.surfaceBg,
-    }}>
-      <div style={{ fontSize: 40 }}>📋</div>
-      <div style={{
-        fontSize: 20, fontWeight: 800, color: t.textPrimary,
-        fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.01em",
-      }}>History</div>
-      <div style={{ fontSize: 13, color: t.textSecondary, textAlign: "center", maxWidth: 260, lineHeight: 1.5 }}>
-        Past sessions and efficiency tracking coming soon.
-      </div>
-    </div>
-  );
-}
 
 function SettingsScreen({ t }) {
   return (

@@ -1,5 +1,42 @@
 import { useState, useEffect } from "react";
 
+// ─── History persistence ─────────────────────────────────────────────────────
+
+function saveHandToHistory(grade, yourPts, optPts) {
+  let sessions;
+  try {
+    sessions = JSON.parse(localStorage.getItem("cribbage_history") || "[]");
+  } catch {
+    sessions = [];
+  }
+  const now = new Date();
+  const today = now.toLocaleDateString("sv");
+  const last = sessions[sessions.length - 1];
+  const isActive = last && last.date === today
+    && (now.getTime() - new Date(last.id).getTime()) < 4 * 60 * 60 * 1000;
+
+  if (isActive) {
+    last.hands += 1;
+    last.yourPts += yourPts;
+    last.optPts += optPts;
+    last.efficiency = last.optPts > 0 ? Math.round(last.yourPts / last.optPts * 100) : 100;
+    last.grades[grade] = (last.grades[grade] || 0) + 1;
+  } else {
+    const entry = {
+      id: now.toISOString(),
+      date: today,
+      hands: 1,
+      yourPts,
+      optPts,
+      efficiency: optPts > 0 ? Math.round(yourPts / optPts * 100) : 100,
+      grades: { Optimal: 0, Close: 0, Suboptimal: 0, [grade]: 1 },
+    };
+    if (sessions.length >= 100) sessions.shift();
+    sessions.push(entry);
+  }
+  localStorage.setItem("cribbage_history", JSON.stringify(sessions));
+}
+
 // ─── Shared game logic ──────────────────────────────────────────────────────
 
 const RANKS = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
@@ -644,6 +681,7 @@ export default function TrainerScreen({ t }) {
       const yourPts = handResult.total + (isDealer && cribResult ? cribResult.total : 0);
       const optPts = (optHandResult?.total || 0) + (isDealer && cribResult ? cribResult.total : 0);
       setSession(s => ({ hands: s.hands + 1, yourPts: s.yourPts + yourPts, optPts: s.optPts + optPts }));
+      saveHandToHistory(feedback?.grade ?? "Suboptimal", yourPts, optPts);
     }
     dealNewHand();
   }
