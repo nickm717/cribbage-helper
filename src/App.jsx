@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import TrainerScreenComponent from "./TrainerScreen.jsx";
 import HistoryScreen from "./HistoryScreen.jsx";
-import { cardValue, rankIdx, isRed, cardKey, combos, scoreFifteens, scorePairs, scoreRuns, scoreFlush, scoreNobs, scoreNibs, scoreHand } from "./engine.js";
+import { cardValue, rankIdx, isRed, cardKey, combos, scoreFifteens, scorePairs, scoreRuns, scoreFlush, scoreNobs, scoreNibs, scoreHand, analyzeHand, RANKS, SUITS } from "./engine.js";
+import { DiscardOptionsExpanded } from "./DiscardAnalysis.jsx";
 
 // ─── Theme tokens — The Card Room ─────────────────────────────────────────
 //
@@ -501,33 +502,75 @@ export default function CribbageCalculator() {
   const [activeSlot, setActiveSlot] = useState(0);
   const [selectedRank, setSelectedRank] = useState(null);
   const [mode, setMode] = useState("hand");
+  const [scorerMode, setScorerMode] = useState("score");
+  const [discardIsDealer, setDiscardIsDealer] = useState(true);
+  const [slots6, setSlots6] = useState(Array(6).fill(null));
+  const [activeSlot6, setActiveSlot6] = useState(0);
 
-  const usedKeys = new Set(slots.filter(Boolean).map(cardKey));
+  // Score mode derived state
+  const usedKeys = scorerMode === "score"
+    ? new Set(slots.filter(Boolean).map(cardKey))
+    : new Set(slots6.filter(Boolean).map(cardKey));
   const hand4 = slots.slice(1).filter(Boolean);
   const result = hand4.length === 4 ? scoreHand(hand4, slots[0], mode === "crib") : null;
-  const canPick = activeSlot !== null;
+  const hand6 = slots6.filter(Boolean);
+  const discardAnalysis = hand6.length === 6 ? analyzeHand(hand6, discardIsDealer) : null;
+  const canPick = scorerMode === "score" ? activeSlot !== null : activeSlot6 !== null;
 
   function pickSlot(i) { setActiveSlot(i); setSelectedRank(null); }
+  function pickSlot6(i) { setActiveSlot6(i); setSelectedRank(null); }
   function pickRank(rank) { setSelectedRank(rank); }
   function pickSuit(suit) {
-    if (activeSlot === null || !selectedRank) return;
-    const newSlots = [...slots];
-    newSlots[activeSlot] = { rank: selectedRank, suit };
-    setSlots(newSlots);
-    setSelectedRank(null);
-    const next = newSlots.findIndex((s, i) => i !== activeSlot && s === null);
-    setActiveSlot(next === -1 ? null : next);
+    if (!selectedRank) return;
+    if (scorerMode === "score") {
+      if (activeSlot === null) return;
+      const newSlots = [...slots];
+      newSlots[activeSlot] = { rank: selectedRank, suit };
+      setSlots(newSlots);
+      setSelectedRank(null);
+      const next = newSlots.findIndex((s, i) => i !== activeSlot && s === null);
+      setActiveSlot(next === -1 ? null : next);
+    } else {
+      if (activeSlot6 === null) return;
+      const newSlots = [...slots6];
+      newSlots[activeSlot6] = { rank: selectedRank, suit };
+      setSlots6(newSlots);
+      setSelectedRank(null);
+      const next = newSlots.findIndex((s, i) => i !== activeSlot6 && s === null);
+      setActiveSlot6(next === -1 ? null : next);
+    }
   }
   function removeCard(i) {
     const s = [...slots]; s[i] = null; setSlots(s);
     setActiveSlot(i); setSelectedRank(null);
   }
+  function removeCard6(i) {
+    const s = [...slots6]; s[i] = null; setSlots6(s);
+    setActiveSlot6(i); setSelectedRank(null);
+  }
   function randomize() {
     const deck = SUITS.flatMap(suit => RANKS.map(rank => ({ rank, suit })));
-    setSlots([...deck].sort(() => Math.random() - 0.5).slice(0, 5));
-    setActiveSlot(null); setSelectedRank(null);
+    if (scorerMode === "score") {
+      setSlots([...deck].sort(() => Math.random() - 0.5).slice(0, 5));
+      setActiveSlot(null); setSelectedRank(null);
+    } else {
+      setSlots6([...deck].sort(() => Math.random() - 0.5).slice(0, 6));
+      setActiveSlot6(null); setSelectedRank(null);
+    }
   }
-  function clear() { setSlots(Array(5).fill(null)); setActiveSlot(0); setSelectedRank(null); }
+  function clear() {
+    if (scorerMode === "score") {
+      setSlots(Array(5).fill(null)); setActiveSlot(0); setSelectedRank(null);
+    } else {
+      setSlots6(Array(6).fill(null)); setActiveSlot6(0); setSelectedRank(null);
+    }
+  }
+  function switchScorerMode(m) {
+    setScorerMode(m);
+    setSelectedRank(null);
+    if (m === "score") { setActiveSlot(0); }
+    else { setActiveSlot6(0); }
+  }
 
   return (
     <div style={{
@@ -604,71 +647,145 @@ export default function CribbageCalculator() {
 
           {view === "scorer" && (
             <div style={{ flex: 1, display: "flex", flexDirection: "column", overflowY: "auto" }}>
-              {/* Slot strip */}
-              <div style={{
-                background: t.surfaceBg, padding: "12px 16px",
-                borderBottom: `1px solid ${t.border}`, flexShrink: 0,
-              }}>
-                <div style={{ display: "flex", gap: 5, marginBottom: 10 }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4, width: 52, flexShrink: 0 }}>
-                    <span style={{ fontSize: 9, color: t.textMuted, letterSpacing: 1, textTransform: "uppercase", textAlign: "center" }}>Cut</span>
-                    <CardPill card={slots[0]} active={activeSlot === 0} onClick={() => pickSlot(0)} onRemove={() => removeCard(0)} t={t} />
+              {/* Score / Discard mode toggle */}
+              <div style={{ display: "flex", gap: 0, borderBottom: `1px solid ${t.border}`, flexShrink: 0 }}>
+                {[["score", "Score Hand"], ["discard", "Discard Analysis"]].map(([m, label]) => (
+                  <button key={m} onClick={() => switchScorerMode(m)} style={{
+                    flex: 1, padding: "10px 0", fontSize: 13, fontWeight: 700,
+                    background: scorerMode === m ? t.accentYellow : t.surfaceBg,
+                    color: scorerMode === m ? t.textOnGold : t.textSecondary,
+                    border: "none", cursor: "pointer",
+                    borderBottom: scorerMode === m ? `2px solid ${t.accentYellow}` : "2px solid transparent",
+                    transition: "background 0.15s, color 0.15s",
+                    WebkitTapHighlightColor: "transparent",
+                    fontFamily: t.fontUi,
+                  }}>{label}</button>
+                ))}
+              </div>
+
+              {/* ── Score mode ── */}
+              {scorerMode === "score" && (<>
+                <div style={{
+                  background: t.surfaceBg, padding: "12px 16px",
+                  borderBottom: `1px solid ${t.border}`, flexShrink: 0,
+                }}>
+                  <div style={{ display: "flex", gap: 5, marginBottom: 10 }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4, width: 52, flexShrink: 0 }}>
+                      <span style={{ fontSize: 9, color: t.textMuted, letterSpacing: 1, textTransform: "uppercase", textAlign: "center" }}>Cut</span>
+                      <CardPill card={slots[0]} active={activeSlot === 0} onClick={() => pickSlot(0)} onRemove={() => removeCard(0)} t={t} />
+                    </div>
+                    <div style={{ width: 1, background: t.border, margin: "14px 0 0", alignSelf: "stretch" }} />
+                    <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+                      <span style={{ fontSize: 9, color: t.textMuted, letterSpacing: 1, textTransform: "uppercase" }}>Hand</span>
+                      <div style={{ display: "flex", gap: 5 }}>
+                        {[1,2,3,4].map(i => (
+                          <CardPill key={i} card={slots[i]} active={activeSlot === i} onClick={() => pickSlot(i)} onRemove={() => removeCard(i)} t={t} />
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ width: 1, background: t.border, margin: "14px 0 0", alignSelf: "stretch" }} />
-                  <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
-                    <span style={{ fontSize: 9, color: t.textMuted, letterSpacing: 1, textTransform: "uppercase" }}>Hand</span>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={randomize} style={{
+                      flex: 1, padding: "8px 0", borderRadius: 9,
+                      background: t.surfaceRaised, border: "none", cursor: "pointer",
+                      fontSize: 13, fontWeight: 600, color: t.textPrimary,
+                    }}>🎲 Random hand</button>
+                    <button onClick={clear} style={{
+                      padding: "8px 18px", borderRadius: 9,
+                      background: "transparent", border: `1px solid ${t.border}`,
+                      cursor: "pointer", fontSize: 13, color: t.textSecondary,
+                    }}>Clear</button>
+                  </div>
+                  <div style={{ display: "flex", gap: 0, marginTop: 10, borderRadius: 10, overflow: "hidden", border: `1px solid ${t.border}` }}>
+                    {["hand", "crib"].map(m => (
+                      <button key={m} onClick={() => setMode(m)} style={{
+                        flex: 1, padding: "9px 0", fontSize: 13, fontWeight: 700,
+                        background: mode === m ? t.accentYellow : t.surfaceRaised,
+                        color: mode === m ? t.textOnGold : t.textSecondary,
+                        border: "none", cursor: "pointer", textTransform: "capitalize",
+                        transition: "background 0.15s, color 0.15s",
+                        WebkitTapHighlightColor: "transparent",
+                      }}>{m === "hand" ? "Hand" : "Crib"}</button>
+                    ))}
+                  </div>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 0, padding: "14px 0 12px", flexShrink: 0 }}>
+                  <div style={{ paddingBottom: 12 }}>
+                    <RankStrip selectedRank={selectedRank} usedKeys={usedKeys} onRankSelect={canPick ? pickRank : () => {}} t={t} />
+                  </div>
+                  <SuitRow selectedRank={selectedRank} usedKeys={usedKeys} onPickSuit={pickSuit} t={t} />
+                </div>
+                {result ? (
+                  <div style={{ background: t.surfaceBg, borderTop: `1px solid ${t.border}`, paddingBottom: "env(safe-area-inset-bottom)" }}>
+                    <ScorePanel result={result} t={t} />
+                  </div>
+                ) : (
+                  <div style={{ padding: "16px 16px", paddingBottom: "calc(32px + env(safe-area-inset-bottom))", textAlign: "center", color: t.textSecondary, fontSize: 13 }}>
+                    {hand4.length === 0 ? "Pick 4 hand cards to score"
+                      : `${4 - hand4.length} more card${4 - hand4.length > 1 ? "s" : ""} needed`}
+                  </div>
+                )}
+              </>)}
+
+              {/* ── Discard Analysis mode ── */}
+              {scorerMode === "discard" && (<>
+                <div style={{
+                  background: t.surfaceBg, padding: "12px 16px",
+                  borderBottom: `1px solid ${t.border}`, flexShrink: 0,
+                }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 10 }}>
+                    <span style={{ fontSize: 9, color: t.textMuted, letterSpacing: 1, textTransform: "uppercase" }}>6-Card Hand</span>
                     <div style={{ display: "flex", gap: 5 }}>
-                      {[1,2,3,4].map(i => (
-                        <CardPill key={i} card={slots[i]} active={activeSlot === i} onClick={() => pickSlot(i)} onRemove={() => removeCard(i)} t={t} />
+                      {[0,1,2,3,4,5].map(i => (
+                        <CardPill key={i} card={slots6[i]} active={activeSlot6 === i} onClick={() => pickSlot6(i)} onRemove={() => removeCard6(i)} t={t} />
                       ))}
                     </div>
                   </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={randomize} style={{
+                      flex: 1, padding: "8px 0", borderRadius: 9,
+                      background: t.surfaceRaised, border: "none", cursor: "pointer",
+                      fontSize: 13, fontWeight: 600, color: t.textPrimary,
+                    }}>🎲 Random hand</button>
+                    <button onClick={clear} style={{
+                      padding: "8px 18px", borderRadius: 9,
+                      background: "transparent", border: `1px solid ${t.border}`,
+                      cursor: "pointer", fontSize: 13, color: t.textSecondary,
+                    }}>Clear</button>
+                  </div>
+                  <div style={{ display: "flex", gap: 0, marginTop: 10, borderRadius: 10, overflow: "hidden", border: `1px solid ${t.border}` }}>
+                    {[["dealer", "Dealer (my crib)"], ["pone", "Pone (their crib)"]].map(([role, label]) => (
+                      <button key={role} onClick={() => setDiscardIsDealer(role === "dealer")} style={{
+                        flex: 1, padding: "9px 0", fontSize: 13, fontWeight: 700,
+                        background: (role === "dealer") === discardIsDealer ? t.accentYellow : t.surfaceRaised,
+                        color: (role === "dealer") === discardIsDealer ? t.textOnGold : t.textSecondary,
+                        border: "none", cursor: "pointer",
+                        transition: "background 0.15s, color 0.15s",
+                        WebkitTapHighlightColor: "transparent",
+                      }}>{label}</button>
+                    ))}
+                  </div>
                 </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button onClick={randomize} style={{
-                    flex: 1, padding: "8px 0", borderRadius: 9,
-                    background: t.surfaceRaised, border: "none", cursor: "pointer",
-                    fontSize: 13, fontWeight: 600, color: t.textPrimary,
-                  }}>🎲 Random hand</button>
-                  <button onClick={clear} style={{
-                    padding: "8px 18px", borderRadius: 9,
-                    background: "transparent", border: `1px solid ${t.border}`,
-                    cursor: "pointer", fontSize: 13, color: t.textSecondary,
-                  }}>Clear</button>
+                <div style={{ display: "flex", flexDirection: "column", gap: 0, padding: "14px 0 12px", flexShrink: 0 }}>
+                  <div style={{ paddingBottom: 12 }}>
+                    <RankStrip selectedRank={selectedRank} usedKeys={usedKeys} onRankSelect={canPick ? pickRank : () => {}} t={t} />
+                  </div>
+                  <SuitRow selectedRank={selectedRank} usedKeys={usedKeys} onPickSuit={pickSuit} t={t} />
                 </div>
-                <div style={{ display: "flex", gap: 0, marginTop: 10, borderRadius: 10, overflow: "hidden", border: `1px solid ${t.border}` }}>
-                  {["hand", "crib"].map(m => (
-                    <button key={m} onClick={() => setMode(m)} style={{
-                      flex: 1, padding: "9px 0", fontSize: 13, fontWeight: 700,
-                      background: mode === m ? t.accentYellow : t.surfaceRaised,
-                      color: mode === m ? t.textOnGold : t.textSecondary,
-                      border: "none", cursor: "pointer", textTransform: "capitalize",
-                      transition: "background 0.15s, color 0.15s",
-                      WebkitTapHighlightColor: "transparent",
-                    }}>{m === "hand" ? "Hand" : "Crib"}</button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Picker */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 0, padding: "14px 0 12px", flexShrink: 0 }}>
-                <div style={{ paddingBottom: 12 }}>
-                  <RankStrip selectedRank={selectedRank} usedKeys={usedKeys} onRankSelect={canPick ? pickRank : () => {}} t={t} />
-                </div>
-                <SuitRow selectedRank={selectedRank} usedKeys={usedKeys} onPickSuit={pickSuit} t={t} />
-              </div>
-
-              {/* Score */}
-              {result ? (
-                <div style={{ background: t.surfaceBg, borderTop: `1px solid ${t.border}`, paddingBottom: "env(safe-area-inset-bottom)" }}>
-                  <ScorePanel result={result} t={t} />
-                </div>
-              ) : (
-                <div style={{ padding: "16px 16px", paddingBottom: "calc(32px + env(safe-area-inset-bottom))", textAlign: "center", color: t.textSecondary, fontSize: 13 }}>
-                  {hand4.length === 0 ? "Pick 4 hand cards to score"
-                    : `${4 - hand4.length} more card${4 - hand4.length > 1 ? "s" : ""} needed`}
-                </div>
-              )}
+                {discardAnalysis ? (
+                  <div style={{ background: t.feltDeep, borderTop: `1px solid ${t.border}`, padding: "10px 10px", paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}>
+                    <div style={{ fontSize: 9, color: t.textMuted, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8, paddingLeft: 2 }}>
+                      Estimates for random opponent discards &amp; cut
+                    </div>
+                    <DiscardOptionsExpanded allOptions={discardAnalysis} t={t} />
+                  </div>
+                ) : (
+                  <div style={{ padding: "16px 16px", paddingBottom: "calc(32px + env(safe-area-inset-bottom))", textAlign: "center", color: t.textSecondary, fontSize: 13 }}>
+                    {hand6.length === 0 ? "Pick 6 cards to analyze discards"
+                      : `${6 - hand6.length} more card${6 - hand6.length > 1 ? "s" : ""} needed`}
+                  </div>
+                )}
+              </>)}
             </div>
           )}
 
