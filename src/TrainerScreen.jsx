@@ -3,7 +3,7 @@ import { cardValue, rankIdx, isRed, cardKey, fullDeck, combos, scoreFifteens, sc
 
 // ─── History persistence ─────────────────────────────────────────────────────
 
-function saveHandToHistory(grade, yourPts, optPts) {
+function saveHandToHistory(grade, yourEV, optEV) {
   let sessions;
   try {
     sessions = JSON.parse(localStorage.getItem("cribbage_history") || "[]");
@@ -18,18 +18,18 @@ function saveHandToHistory(grade, yourPts, optPts) {
 
   if (isActive) {
     last.hands += 1;
-    last.yourPts += yourPts;
-    last.optPts += optPts;
-    last.efficiency = last.optPts > 0 ? Math.round(last.yourPts / last.optPts * 100) : 100;
+    last.yourEV = (last.yourEV || 0) + yourEV;
+    last.optEV  = (last.optEV  || 0) + optEV;
+    last.efficiency = last.optEV > 0 ? Math.min(100, Math.round(last.yourEV / last.optEV * 100)) : 100;
     last.grades[grade] = (last.grades[grade] || 0) + 1;
   } else {
     const entry = {
       id: now.toISOString(),
       date: today,
       hands: 1,
-      yourPts,
-      optPts,
-      efficiency: optPts > 0 ? Math.round(yourPts / optPts * 100) : 100,
+      yourEV,
+      optEV,
+      efficiency: optEV > 0 ? Math.min(100, Math.round(yourEV / optEV * 100)) : 100,
       grades: { Optimal: 0, Close: 0, Suboptimal: 0, [grade]: 1 },
     };
     if (sessions.length >= 100) sessions.shift();
@@ -174,7 +174,7 @@ function StatChip({ label, value, t }) {
 // Tier color follows the score-tier palette (the only multi-color exception in
 // the system, per DESIGN.md). Compact vertical footprint: the strip aligns
 // label + metadata to the big number's baseline so the whole row is one line tall.
-function SessionStatStrip({ hands, yourPts, optPts, efficiency, t }) {
+function SessionStatStrip({ hands, yourEV, optEV, efficiency, t }) {
   const hasData = hands > 0;
   const tier = !hasData ? null
     : efficiency >= 90 ? t.scoreAccents[3]  // green
@@ -198,7 +198,7 @@ function SessionStatStrip({ hands, yourPts, optPts, efficiency, t }) {
           whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
         }}>
           {hasData
-            ? <>{hands} hand{hands === 1 ? "" : "s"} <span style={{ color: t.textMuted }}>·</span> {yourPts}/{optPts} pts</>
+            ? <>{hands} hand{hands === 1 ? "" : "s"} <span style={{ color: t.textMuted }}>·</span> avg {(yourEV / hands).toFixed(1)} / {(optEV / hands).toFixed(1)} EV</>
             : <>Play a hand to start tracking</>}
         </div>
       </div>
@@ -471,7 +471,9 @@ function ScoreBody({ feedback, kept, discarded, cut, handResult, cribResult, opt
   const totalYour = session.yourPts + thisYour;
   const totalOpt = session.optPts + thisOpt;
   const hands = session.hands + 1;
-  const eff = totalOpt > 0 ? Math.round(totalYour / totalOpt * 100) : 100;
+  const totalYourEV = session.yourEV + (feedback?.playerEV ?? 0);
+  const totalOptEV  = session.optEV  + (feedback?.optEV    ?? 0);
+  const eff = totalOptEV > 0 ? Math.min(100, Math.round(totalYourEV / totalOptEV * 100)) : 100;
   const effColor = eff >= 90 ? "#34d399" : eff >= 75 ? "#fb923c" : "#f87171";
 
   return (
@@ -580,7 +582,7 @@ function ScoreBody({ feedback, kept, discarded, cut, handResult, cribResult, opt
 // ─── Main TrainerScreen ──────────────────────────────────────────────────────
 
 export default function TrainerScreen({ t }) {
-  const [session, setSession] = useState({ hands: 0, yourPts: 0, optPts: 0 });
+  const [session, setSession] = useState({ hands: 0, yourPts: 0, optPts: 0, yourEV: 0, optEV: 0 });
   const [phase, setPhase] = useState("discard");
   const [isDealer, setIsDealer] = useState(true);
   const [hand6, setHand6] = useState([]);
@@ -674,14 +676,20 @@ export default function TrainerScreen({ t }) {
     if (phase === "score" && handResult) {
       const yourPts = handResult.total + (isDealer && cribResult ? cribResult.total : 0);
       const optPts = (optHandResult?.total || 0) + (isDealer && cribResult ? cribResult.total : 0);
-      setSession(s => ({ hands: s.hands + 1, yourPts: s.yourPts + yourPts, optPts: s.optPts + optPts }));
-      saveHandToHistory(feedback?.grade ?? "Suboptimal", yourPts, optPts);
+      setSession(s => ({
+        hands: s.hands + 1,
+        yourPts: s.yourPts + yourPts,
+        optPts:  s.optPts  + optPts,
+        yourEV:  s.yourEV  + (feedback?.playerEV ?? 0),
+        optEV:   s.optEV   + (feedback?.optEV    ?? 0),
+      }));
+      saveHandToHistory(feedback?.grade ?? "Suboptimal", feedback?.playerEV ?? 0, feedback?.optEV ?? 0);
     }
     dealNewHand();
   }
 
-  const sessionEfficiency = session.optPts > 0
-    ? Math.round(session.yourPts / session.optPts * 100) : 100;
+  const sessionEfficiency = session.optEV > 0
+    ? Math.min(100, Math.round(session.yourEV / session.optEV * 100)) : 100;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: t.surfaceBg }}>
@@ -694,8 +702,8 @@ export default function TrainerScreen({ t }) {
       }}>
         <SessionStatStrip
           hands={session.hands}
-          yourPts={session.yourPts}
-          optPts={session.optPts}
+          yourEV={session.yourEV}
+          optEV={session.optEV}
           efficiency={sessionEfficiency}
           t={t}
         />

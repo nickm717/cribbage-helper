@@ -147,7 +147,7 @@ function SessionRow({ session, t }) {
         fontSize: 20, fontWeight: 700, color,
         letterSpacing: "-0.02em", flexShrink: 0,
       }}>
-        {efficiency}%
+        {Math.min(100, efficiency)}%
       </div>
     </div>
   );
@@ -185,18 +185,26 @@ export default function HistoryScreen({ t }) {
   // ── Derived data ────────────────────────────────────────────────────────────
 
   const totalHands = sessions.reduce((s, x) => s + x.hands, 0);
-  const totalYour  = sessions.reduce((s, x) => s + x.yourPts, 0);
-  const totalOpt   = sessions.reduce((s, x) => s + x.optPts, 0);
-  const lifetimeEff = totalOpt > 0 ? Math.round(totalYour / totalOpt * 100) : 100;
-  const bestEff     = Math.max(...sessions.map(s => s.efficiency));
+  const totalYour   = sessions.reduce((s, x) => s + x.yourPts, 0);
+  const totalOpt    = sessions.reduce((s, x) => s + x.optPts, 0);
+  const totalYourEV = sessions.reduce((s, x) => s + (x.yourEV ?? 0), 0);
+  const totalOptEV  = sessions.reduce((s, x) => s + (x.optEV  ?? 0), 0);
+  const lifetimeEff = totalOptEV > 0
+    ? Math.min(100, Math.round(totalYourEV / totalOptEV * 100))
+    : (totalOpt > 0 ? Math.min(100, Math.round(totalYour / totalOpt * 100)) : 100);
+  const bestEff     = Math.min(100, Math.max(...sessions.map(s => s.efficiency)));
 
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
   const sevenKey = sevenDaysAgo.toLocaleDateString("sv");
   const recentSessions = sessions.filter(s => s.date >= sevenKey);
-  const recentYour = recentSessions.reduce((s, x) => s + x.yourPts, 0);
-  const recentOpt  = recentSessions.reduce((s, x) => s + x.optPts, 0);
-  const sevenDayEff = recentOpt > 0 ? Math.round(recentYour / recentOpt * 100) : null;
+  const recentYour   = recentSessions.reduce((s, x) => s + x.yourPts, 0);
+  const recentOpt    = recentSessions.reduce((s, x) => s + x.optPts, 0);
+  const recentYourEV = recentSessions.reduce((s, x) => s + (x.yourEV ?? 0), 0);
+  const recentOptEV  = recentSessions.reduce((s, x) => s + (x.optEV  ?? 0), 0);
+  const sevenDayEff = recentOptEV > 0
+    ? Math.min(100, Math.round(recentYourEV / recentOptEV * 100))
+    : (recentOpt > 0 ? Math.min(100, Math.round(recentYour / recentOpt * 100)) : null);
 
   // Daily aggregation for sparkline (last 14 days)
   const fourteenDaysAgo = new Date();
@@ -205,16 +213,20 @@ export default function HistoryScreen({ t }) {
   const byDate = sessions
     .filter(s => s.date >= fourteenKey)
     .reduce((acc, s) => {
-      if (!acc[s.date]) acc[s.date] = { yourPts: 0, optPts: 0 };
+      if (!acc[s.date]) acc[s.date] = { yourPts: 0, optPts: 0, yourEV: 0, optEV: 0 };
       acc[s.date].yourPts += s.yourPts;
       acc[s.date].optPts  += s.optPts;
+      acc[s.date].yourEV  += (s.yourEV ?? 0);
+      acc[s.date].optEV   += (s.optEV  ?? 0);
       return acc;
     }, {});
   const dailyData = Object.entries(byDate)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([date, d]) => ({
       date,
-      efficiency: d.optPts > 0 ? Math.round(d.yourPts / d.optPts * 100) : 100,
+      efficiency: d.optEV > 0
+        ? Math.min(100, Math.round(d.yourEV / d.optEV * 100))
+        : (d.optPts > 0 ? Math.min(100, Math.round(d.yourPts / d.optPts * 100)) : 100),
     }));
 
   const recentDisplaySessions = [...sessions].reverse().slice(0, 20);
