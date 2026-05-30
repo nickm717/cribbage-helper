@@ -13,8 +13,7 @@ function saveHandToHistory(grade, yourEV, optEV) {
   const now = new Date();
   const today = now.toLocaleDateString("sv");
   const last = sessions[sessions.length - 1];
-  const isActive = last && last.date === today
-    && (now.getTime() - new Date(last.id).getTime()) < 4 * 60 * 60 * 1000;
+  const isActive = last && last.date === today;
 
   if (isActive) {
     last.hands += 1;
