@@ -49,7 +49,7 @@ function PlayingCard({ card, selected, dimmed, t }) {
   const selectedShadow = `0 0 0 2px ${t.goldBright}, 0 6px 20px oklch(0% 0 0 / 0.45)`;
   return (
     <div style={{
-      width: 54, height: 78, borderRadius: 6, flexShrink: 0,
+      width: 72, height: 104, borderRadius: 8, flexShrink: 0,
       background: t.cardFace,
       border: selected ? `2px solid ${t.goldBright}` : "2px solid oklch(0% 0 0 / 0.08)",
       boxShadow: selected ? selectedShadow : restShadow,
@@ -60,33 +60,32 @@ function PlayingCard({ card, selected, dimmed, t }) {
       overflow: "hidden",
     }}>
       {/* Top-left corner — Spectral rank + suit */}
-      <div style={{ position: "absolute", top: 3, left: 5, lineHeight: 1, textAlign: "left" }}>
+      <div style={{ position: "absolute", top: 4, left: 7, lineHeight: 1, textAlign: "left" }}>
         <div style={{
-          fontSize: card?.rank === "10" ? 13 : 15,
+          fontSize: card?.rank === "10" ? 17 : 20,
           fontWeight: 700, color: ink,
           fontFamily: t.fontCard, lineHeight: 1,
         }}>{card?.rank}</div>
-        <div style={{ fontSize: 11, color: ink, fontFamily: t.fontCard, lineHeight: 1.1, marginTop: 1 }}>{card?.suit}</div>
+        <div style={{ fontSize: 14, color: ink, fontFamily: t.fontCard, lineHeight: 1.1, marginTop: 1 }}>{card?.suit}</div>
       </div>
-      {/* Center suit glyph — full-color focal point. Sits prominently at the
-          card center like the pip on a real playing card. */}
+      {/* Center suit glyph */}
       <span style={{
         position: "absolute", top: "50%", left: "50%",
         transform: "translate(-50%, -50%)",
-        fontSize: 30, color: ink, opacity: 1,
+        fontSize: 40, color: ink, opacity: 1,
         lineHeight: 1, pointerEvents: "none",
       }}>{card?.suit}</span>
       {/* Bottom-right corner — rotated 180° per real-deck convention */}
       <div style={{
-        position: "absolute", bottom: 3, right: 5, lineHeight: 1,
+        position: "absolute", bottom: 4, right: 7, lineHeight: 1,
         textAlign: "left", transform: "rotate(180deg)",
       }}>
         <div style={{
-          fontSize: card?.rank === "10" ? 13 : 15,
+          fontSize: card?.rank === "10" ? 17 : 20,
           fontWeight: 700, color: ink,
           fontFamily: t.fontCard, lineHeight: 1,
         }}>{card?.rank}</div>
-        <div style={{ fontSize: 11, color: ink, fontFamily: t.fontCard, lineHeight: 1.1, marginTop: 1 }}>{card?.suit}</div>
+        <div style={{ fontSize: 14, color: ink, fontFamily: t.fontCard, lineHeight: 1.1, marginTop: 1 }}>{card?.suit}</div>
       </div>
     </div>
   );
@@ -97,8 +96,8 @@ function PlayingCard({ card, selected, dimmed, t }) {
 // overlap (OVERLAP px) exposes the DOM stacking order so a lifted card slides
 // under cards that come later in the DOM, exactly as required.
 function CardFan({ cards, selected = [], onSelect, dimOthers = false, t }) {
-  const LIFT = 20;    // translateY lift on selection
-  const OVERLAP = 10; // px each card overlaps the previous
+  const LIFT = 26;    // translateY lift on selection
+  const OVERLAP = 18; // px each card overlaps the previous
   return (
     <div style={{
       display: "flex", justifyContent: "center",
@@ -735,7 +734,7 @@ export default function TrainerScreen({ t }) {
 
         {/* Card shelf */}
         <div style={{
-          padding: "0 16px 10px",
+          padding: "0 0 10px",
           display: "flex", justifyContent: "center", alignItems: "flex-end",
         }}>
           {phase === "discard" && (
