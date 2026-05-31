@@ -96,7 +96,7 @@ function PlayingCard({ card, selected, dimmed, t }) {
 // overlap (OVERLAP px) exposes the DOM stacking order so a lifted card slides
 // under cards that come later in the DOM, exactly as required.
 function CardFan({ cards, selected = [], onSelect, dimOthers = false, t }) {
-  const LIFT = 26;    // translateY lift on selection
+  const LIFT = 13;    // translateY lift on selection
   const OVERLAP = 18; // px each card overlaps the previous
   return (
     <div style={{
