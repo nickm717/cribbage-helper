@@ -53,8 +53,8 @@ function PlayingCard({ card, selected, dimmed, t }) {
       background: t.cardFace,
       border: selected ? `2px solid ${t.goldBright}` : "2px solid oklch(0% 0 0 / 0.08)",
       boxShadow: selected ? selectedShadow : restShadow,
-      opacity: dimmed ? 0.35 : 1,
-      transition: "opacity 150ms cubic-bezier(0.22, 0.8, 0.36, 1), border-color 150ms cubic-bezier(0.22, 0.8, 0.36, 1), box-shadow 150ms cubic-bezier(0.22, 0.8, 0.36, 1)",
+      filter: dimmed ? "brightness(0.5)" : "none",
+      transition: "filter 150ms cubic-bezier(0.22, 0.8, 0.36, 1), border-color 150ms cubic-bezier(0.22, 0.8, 0.36, 1), box-shadow 150ms cubic-bezier(0.22, 0.8, 0.36, 1)",
       userSelect: "none", WebkitUserSelect: "none",
       position: "relative",
       overflow: "hidden",
@@ -92,14 +92,18 @@ function PlayingCard({ card, selected, dimmed, t }) {
   );
 }
 
-// CardFan: flat row of cards with tap-to-select. Selected cards lift -10px
-// per DESIGN.md card spec. Sized to fit 6 cards on mobile (~375px): 6 × 54 + 5 × 4 = 344px.
+// CardFan: flat row of overlapping cards with tap-to-select. Selected cards
+// lift via translateY only — no z-index is ever modified. The negative margin
+// overlap (OVERLAP px) exposes the DOM stacking order so a lifted card slides
+// under cards that come later in the DOM, exactly as required.
 function CardFan({ cards, selected = [], onSelect, dimOthers = false, t }) {
-  const LIFT = 12; // a touch above spec's 10 for thumb clarity on mobile
+  const LIFT = 20;    // translateY lift on selection
+  const OVERLAP = 10; // px each card overlaps the previous
   return (
     <div style={{
-      display: "flex", gap: 4, justifyContent: "center",
-      paddingTop: LIFT, // reserve room so lifted cards don't clip
+      display: "flex", justifyContent: "center",
+      paddingTop: LIFT, // reserve headroom so the lift isn't clipped
+      overflow: "visible",
     }}>
       {cards.map((card, i) => {
         const isSel = selected.includes(i);
@@ -109,6 +113,7 @@ function CardFan({ cards, selected = [], onSelect, dimOthers = false, t }) {
             key={cardKey(card)}
             onClick={() => onSelect?.(i)}
             style={{
+              marginLeft: i === 0 ? 0 : -OVERLAP,
               transform: isSel ? `translateY(-${LIFT}px)` : "translateY(0)",
               transition: "transform 200ms cubic-bezier(0.22, 0.8, 0.36, 1)",
               cursor: onSelect ? "pointer" : "default",
