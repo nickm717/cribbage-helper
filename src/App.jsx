@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import TrainerScreenComponent from "./TrainerScreen.jsx";
 import HistoryScreen from "./HistoryScreen.jsx";
-import { cardValue, rankIdx, isRed, cardKey, combos, scoreFifteens, scorePairs, scoreRuns, scoreFlush, scoreNobs, scoreNibs, scoreHand } from "./engine.js";
+import { cardValue, rankIdx, isRed, cardKey, combos, scoreFifteens, scorePairs, scoreRuns, scoreFlush, scoreNobs, scoreNibs, scoreHand, RANKS, SUITS } from "./engine.js";
 
 // ─── Theme tokens — The Card Room ─────────────────────────────────────────
 //
