@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import TrainerScreenComponent from "./TrainerScreen.jsx";
 import HistoryScreen from "./HistoryScreen.jsx";
-import { cardValue, rankIdx, isRed, cardKey, combos, scoreFifteens, scorePairs, scoreRuns, scoreFlush, scoreNobs, scoreNibs, scoreHand, RANKS, SUITS } from "./engine.js";
+import { isRed, cardKey, scoreHand, RANKS, SUITS } from "./engine.js";
 
 // ─── Theme tokens — The Card Room ─────────────────────────────────────────
 //
@@ -157,8 +157,9 @@ function useTheme() {
     return () => m.removeEventListener("change", h);
   }, []);
   const dark = override !== null ? override : sysDark;
+  const theme = useMemo(() => makeTheme(dark), [dark]);
   const toggle = () => setOverride(o => (o === null ? !sysDark : !o));
-  return [makeTheme(dark), toggle];
+  return [theme, toggle];
 }
 
 function useIsDesktop() {
@@ -231,8 +232,7 @@ function RankStrip({ selectedRank, usedKeys, onRankSelect, t }) {
               height: "clamp(38px, 11vw, 48px)", borderRadius: 8, border: "none", padding: 0,
               minWidth: 0, overflow: "hidden",
               background: isSelected ? t.accentYellow : allUsed ? t.surfaceSunken : t.surfaceRaised,
-              // Selected: textPrimary on accentYellow — dark:#1c1c1e on #f5b800=6.0:1✓ light:#1c1c1e on #b8860b=4.6:1✓
-              color: isSelected ? (t.dark ? "#1c1c1e" : "#ffffff") : allUsed ? t.textDisabled : t.textPrimary,
+              color: isSelected ? t.textOnGold : allUsed ? t.textDisabled : t.textPrimary,
               fontSize: "clamp(11px, 3.5vw, 15px)", fontWeight: 800,
               cursor: allUsed ? "default" : "pointer",
               opacity: allUsed ? 0.4 : 1,
@@ -383,7 +383,7 @@ function TopBar({ view, dropdownOpen, onToggleDropdown, onThemeToggle, isDesktop
     }}>
       <span style={{
         fontSize: 20, fontWeight: 800, color: t.textPrimary,
-        fontFamily: "system-ui, -apple-system, sans-serif",
+        fontFamily: t.fontUi,
         letterSpacing: "-0.02em", lineHeight: 1, flexShrink: 0,
       }}>121</span>
 
@@ -401,7 +401,7 @@ function TopBar({ view, dropdownOpen, onToggleDropdown, onThemeToggle, isDesktop
       >
         <span style={{
           fontSize: 15, fontWeight: 700, color: t.textPrimary,
-          fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.01em",
+          fontFamily: t.fontUi, letterSpacing: "-0.01em",
         }}>{current?.label}</span>
         <span style={{
           fontSize: 10, color: t.textSecondary, lineHeight: 1,
@@ -457,7 +457,7 @@ function SectionDropdown({ view, onNavigate, t }) {
               <div style={{
                 fontSize: 15, fontWeight: 700, lineHeight: 1.2,
                 color: active ? t.accentYellow : t.textPrimary,
-                fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.01em",
+                fontFamily: t.fontUi, letterSpacing: "-0.01em",
               }}>{item.label}</div>
               <div style={{ fontSize: 13, color: t.textSecondary, marginTop: 2, lineHeight: 1.3 }}>
                 {item.subtitle}
@@ -481,7 +481,7 @@ function SettingsScreen({ t }) {
       <div style={{ fontSize: 40 }}>⚙️</div>
       <div style={{
         fontSize: 20, fontWeight: 800, color: t.textPrimary,
-        fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.01em",
+        fontFamily: t.fontUi, letterSpacing: "-0.01em",
       }}>Settings</div>
       <div style={{ fontSize: 13, color: t.textSecondary, textAlign: "center", maxWidth: 260, lineHeight: 1.5 }}>
         Rules variants and preferences coming soon.
@@ -534,7 +534,7 @@ export default function CribbageCalculator() {
       height: isDesktop ? undefined : "100dvh",
       minHeight: isDesktop ? "100vh" : undefined,
       background: t.pageBg,
-      fontFamily: "system-ui, -apple-system, sans-serif",
+      fontFamily: t.fontUi,
       display: "flex", flexDirection: "column",
       alignItems: "center",
       padding: isDesktop ? "48px 20px 64px" : 0,

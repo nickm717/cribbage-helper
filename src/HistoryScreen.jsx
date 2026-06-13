@@ -86,7 +86,7 @@ function Sparkline({ data, t }) {
           fontSize="9"
           fill={t.textMuted}
           textAnchor={li === 0 ? "start" : li === 2 ? "end" : "middle"}
-          fontFamily="system-ui, -apple-system, sans-serif"
+          fontFamily={t.fontUi}
         >
           {fmtDate(data[i].date)}
         </text>
@@ -109,7 +109,7 @@ function HeadlineStat({ label, value, color, t }) {
       </div>
       <div style={{
         fontSize: 20, fontWeight: 700, color: color || t.textPrimary,
-        fontFamily: "system-ui, -apple-system, sans-serif",
+        fontFamily: t.fontUi,
         letterSpacing: "-0.02em", lineHeight: 1,
       }}>
         {value}
@@ -134,7 +134,7 @@ function SessionRow({ session, t }) {
       <div style={{ minWidth: 0 }}>
         <div style={{
           fontSize: 13, fontWeight: 600, color: t.textPrimary,
-          fontFamily: "system-ui, -apple-system, sans-serif",
+          fontFamily: t.fontUi,
         }}>
           {fmtDate(date)}
         </div>
@@ -143,7 +143,7 @@ function SessionRow({ session, t }) {
         </div>
       </div>
       <div style={{
-        fontFamily: "var(--font-mono, ui-monospace, monospace)",
+        fontFamily: t.fontMono,
         fontSize: 20, fontWeight: 700, color,
         letterSpacing: "-0.02em", flexShrink: 0,
       }}>
@@ -168,7 +168,7 @@ export default function HistoryScreen({ t }) {
         <div style={{ fontSize: 40 }}>📈</div>
         <div style={{
           fontSize: 20, fontWeight: 800, color: t.textPrimary,
-          fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.01em",
+          fontFamily: t.fontUi, letterSpacing: "-0.01em",
         }}>
           No history yet
         </div>
@@ -184,9 +184,8 @@ export default function HistoryScreen({ t }) {
 
   // ── Derived data ────────────────────────────────────────────────────────────
 
-  const totalHands = sessions.reduce((s, x) => s + x.hands, 0);
-  const totalYour   = sessions.reduce((s, x) => s + x.yourPts, 0);
-  const totalOpt    = sessions.reduce((s, x) => s + x.optPts, 0);
+  const totalYour   = sessions.reduce((s, x) => s + (x.yourPts ?? 0), 0);
+  const totalOpt    = sessions.reduce((s, x) => s + (x.optPts ?? 0), 0);
   const totalYourEV = sessions.reduce((s, x) => s + (x.yourEV ?? 0), 0);
   const totalOptEV  = sessions.reduce((s, x) => s + (x.optEV  ?? 0), 0);
   const lifetimeEff = totalOptEV > 0
@@ -198,8 +197,8 @@ export default function HistoryScreen({ t }) {
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
   const sevenKey = sevenDaysAgo.toLocaleDateString("sv");
   const recentSessions = sessions.filter(s => s.date >= sevenKey);
-  const recentYour   = recentSessions.reduce((s, x) => s + x.yourPts, 0);
-  const recentOpt    = recentSessions.reduce((s, x) => s + x.optPts, 0);
+  const recentYour   = recentSessions.reduce((s, x) => s + (x.yourPts ?? 0), 0);
+  const recentOpt    = recentSessions.reduce((s, x) => s + (x.optPts ?? 0), 0);
   const recentYourEV = recentSessions.reduce((s, x) => s + (x.yourEV ?? 0), 0);
   const recentOptEV  = recentSessions.reduce((s, x) => s + (x.optEV  ?? 0), 0);
   const sevenDayEff = recentOptEV > 0
@@ -235,7 +234,7 @@ export default function HistoryScreen({ t }) {
     fontSize: 9, fontWeight: 700, color: t.textMuted,
     letterSpacing: "0.12em", textTransform: "uppercase",
     marginBottom: 10,
-    fontFamily: "system-ui, -apple-system, sans-serif",
+    fontFamily: t.fontUi,
   };
 
   return (
