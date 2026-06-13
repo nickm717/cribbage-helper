@@ -55,7 +55,7 @@ function PlayingCard({ card, selected, dimmed, t }) {
   const selectedShadow = `0 0 0 2px ${t.goldBright}, 0 6px 20px oklch(0% 0 0 / 0.45)`;
   return (
     <div style={{
-      width: 72, height: 104, borderRadius: 8, flexShrink: 0,
+      width: 72, height: 104, borderRadius: t.radius.md, flexShrink: 0,
       background: t.cardFace,
       border: selected ? `2px solid ${t.goldBright}` : "2px solid oklch(0% 0 0 / 0.08)",
       boxShadow: selected ? selectedShadow : restShadow,
@@ -130,7 +130,7 @@ function CardFan({ cards, selected = [], onSelect, dimOthers = false, t }) {
               transform: isSel ? `translateY(-${LIFT}px)` : "translateY(0)",
               transition: "transform 200ms cubic-bezier(0.22, 0.8, 0.36, 1)",
               cursor: interactive ? "pointer" : "default",
-              borderRadius: 8,
+              borderRadius: t.radius.md,
               WebkitTapHighlightColor: "transparent",
             }}
           >
@@ -155,7 +155,7 @@ function MiniCard({ card, t }) {
       display: "inline-flex", alignItems: "center",
       fontSize: 12, fontWeight: 700,
       color: red ? t.suitRed : t.textOnCard,
-      background: t.cardFace, borderRadius: 4, padding: "3px 7px",
+      background: t.cardFace, borderRadius: t.radius.sm, padding: "3px 7px",
       fontFamily: t.fontCard, lineHeight: 1,
       border: `1px solid oklch(0% 0 0 / 0.08)`,
     }}>{card.rank}{card.suit}</span>
@@ -232,7 +232,7 @@ function SessionStatStrip({ hands, yourEV, optEV, efficiency, t }) {
 function ActionButton({ label, onClick, disabled, t }) {
   return (
     <button onClick={onClick} disabled={disabled} style={{
-      flex: 1, padding: "14px 0", borderRadius: 8, border: "none",
+      flex: 1, padding: "14px 0", borderRadius: t.radius.md, border: "none",
       background: disabled ? t.feltMid : t.goldBright,
       color: disabled ? t.textDisabled : t.textOnGold,
       fontSize: 15, fontWeight: 600,
@@ -268,7 +268,7 @@ function ScoreLogRow({ item, t, accentGold = false }) {
     <div style={{
       display: "flex", alignItems: "center", gap: 12,
       padding: "10px 14px", marginBottom: 6,
-      background: t.feltMid, border: `1px solid ${t.feltRule}`, borderRadius: 8,
+      background: t.feltMid, border: `1px solid ${t.feltRule}`, borderRadius: t.radius.md,
     }}>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
@@ -357,8 +357,8 @@ function CalculatingBody({ progress, t }) {
       <div style={{
         fontSize: 24, fontWeight: 800, color: t.textPrimary, letterSpacing: "-0.01em",
       }}>Calculating EV…</div>
-      <div style={{ width: "70%", maxWidth: 240, background: t.feltLift, borderRadius: 999, height: 4, overflow: "hidden" }}>
-        <div style={{ height: "100%", width: `${pct}%`, background: t.goldBright, borderRadius: 999, transition: "width 120ms linear" }} />
+      <div style={{ width: "70%", maxWidth: 240, background: t.feltLift, borderRadius: t.radius.pill, height: 4, overflow: "hidden" }}>
+        <div style={{ height: "100%", width: `${pct}%`, background: t.goldBright, borderRadius: t.radius.pill, transition: "width 120ms linear" }} />
       </div>
       <div style={{ fontFamily: t.fontMono, fontSize: 12, color: t.textSecondary }}>{pct}%</div>
     </div>
@@ -397,7 +397,7 @@ function DiscardOptionRow({ option, isPlayerDiscard, isOptimal, t }) {
 
   return (
     <div style={{
-      background: bg, border, borderRadius: 8,
+      background: bg, border, borderRadius: t.radius.md,
       padding: "10px 12px", display: "flex", flexDirection: "column", gap: 7,
     }}>
       {/* Top row: kept cards + rank badge */}
@@ -423,7 +423,7 @@ function DiscardOptionRow({ option, isPlayerDiscard, isOptimal, t }) {
           { label: "CRIB", value: option.cribAvg.toFixed(1) },
           { label: "NET", value: option.combinedEV.toFixed(1) },
         ].map(({ label, value }) => (
-          <div key={label} style={{ background: t.feltDeep, borderRadius: 6, padding: "5px 6px", textAlign: "center" }}>
+          <div key={label} style={{ background: t.feltDeep, borderRadius: t.radius.card, padding: "5px 6px", textAlign: "center" }}>
             <div style={{ fontSize: 8, color: t.textMuted, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 2 }}>{label}</div>
             <div style={{ fontSize: 12, fontWeight: 600, color: label === "NET" ? t.goldBright : t.textPrimary, fontFamily: t.fontMono, letterSpacing: "-0.01em" }}>{value}</div>
           </div>
@@ -593,11 +593,11 @@ function ScoreBody({ feedback, kept, discarded, cut, handResult, cribResult, opt
         <div style={{ fontSize: 9, color: t.textMuted, letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>
           Efficiency
         </div>
-        <div style={{ background: t.feltLift, borderRadius: 999, height: 3, overflow: "hidden", marginBottom: 6 }}>
+        <div style={{ background: t.feltLift, borderRadius: t.radius.pill, height: 3, overflow: "hidden", marginBottom: 6 }}>
           <div style={{
             height: "100%", width: `${Math.min(100, eff)}%`,
             background: t.goldBright,
-            borderRadius: 999, transition: "width 0.6s ease-out",
+            borderRadius: t.radius.pill, transition: "width 0.6s ease-out",
           }} />
         </div>
         <div style={{ fontFamily: t.fontMono, fontSize: 28, fontWeight: 700, color: effColor, letterSpacing: "-0.02em" }}>{eff}%</div>
@@ -798,7 +798,7 @@ export default function TrainerScreen({ t }) {
           <>
             {error && (
               <div style={{
-                marginBottom: 10, padding: "10px 14px", borderRadius: 8,
+                marginBottom: 10, padding: "10px 14px", borderRadius: t.radius.md,
                 background: t.feltMid, border: `1px solid ${t.scoreMiss}`,
                 color: t.textSecondary, fontSize: 13,
               }}>

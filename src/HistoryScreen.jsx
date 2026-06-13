@@ -122,7 +122,7 @@ function SessionRow({ session, t }) {
       display: "flex", alignItems: "center", justifyContent: "space-between",
       padding: "10px 14px",
       background: t.feltMid,
-      borderRadius: 8,
+      borderRadius: t.radius.md,
       border: `1px solid ${t.feltRule}`,
     }}>
       <div style={{ minWidth: 0 }}>

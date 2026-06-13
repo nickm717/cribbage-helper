@@ -45,7 +45,7 @@ function TopBar({ view, dropdownOpen, onToggleDropdown, onThemeToggle, isDesktop
         style={{
           display: "flex", alignItems: "center", gap: 5,
           background: t.feltMid, border: "none",
-          borderRadius: 8, padding: "6px 10px",
+          borderRadius: t.radius.md, padding: "6px 10px",
           cursor: "pointer", flexShrink: 0,
           WebkitTapHighlightColor: "transparent",
         }}

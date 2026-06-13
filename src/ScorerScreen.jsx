@@ -17,7 +17,7 @@ function CardPill({ card, active, onClick, onRemove, t }) {
         aria-label={filled ? `${cardLabel(card)}, slot filled` : "Empty slot, tap to fill"}
         aria-pressed={active}
         style={{
-          flex: 1, height: "clamp(38px, 11vw, 44px)", borderRadius: 8, border: "none",
+          flex: 1, height: "clamp(38px, 11vw, 44px)", borderRadius: t.radius.md, border: "none",
           // Filled = real card lying on felt (cream + Spectral). Empty = felt slot placeholder.
           background: filled ? t.cardFace : t.feltMid,
           outline: active ? `2px solid ${t.goldBright}` : `2px solid transparent`,
@@ -73,7 +73,7 @@ function RankStrip({ selectedRank, usedKeys, onRankSelect, t }) {
             aria-pressed={isSelected}
             aria-label={`Rank ${rank}${allUsed ? ", all suits used" : ""}`}
             style={{
-              height: "clamp(38px, 11vw, 48px)", borderRadius: 8, border: "none", padding: 0,
+              height: "clamp(38px, 11vw, 48px)", borderRadius: t.radius.md, border: "none", padding: 0,
               minWidth: 0, overflow: "hidden",
               background: isSelected ? t.goldBright : allUsed ? t.feltDeep : t.feltMid,
               color: isSelected ? t.textOnGold : allUsed ? t.textDisabled : t.textPrimary,
@@ -168,7 +168,7 @@ function ScorePanel({ result, t }) {
           return (
             <div key={i} style={{
               display: "flex", alignItems: "center", gap: 12,
-              padding: "10px 14px", borderRadius: 8,
+              padding: "10px 14px", borderRadius: t.radius.md,
               background: t.feltMid, border: `1px solid ${t.feltRule}`,
             }}>
               <div style={{ flex: 1, minWidth: 0 }}>
