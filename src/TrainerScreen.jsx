@@ -1,6 +1,6 @@
 import { useState, useEffect, useReducer, useRef } from "react";
 import { rankIdx, isRed, cardKey, fullDeck, scoreHand, shuffle } from "./engine.js";
-import { efficiencyPct, tierColor, cardLabel } from "./format.js";
+import { efficiencyPct, tierColor, cardLabel, describeKeep } from "./format.js";
 import { useAnalyzeWorker } from "./useAnalyzeWorker.js";
 
 // ─── History persistence ─────────────────────────────────────────────────────
@@ -529,6 +529,15 @@ function ScoreBody({ feedback, kept, discarded, cut, handResult, cribResult, opt
               {feedback.optKeep.map(c => (
                 <MiniCard key={cardKey(c)} card={c} t={t} />
               ))}
+            </div>
+          )}
+          {/* Plain-language "why": teach the reasoning, not just the EV gap. */}
+          {feedback.optKeep && (
+            <div style={{
+              marginTop: feedback.grade !== "Optimal" ? 6 : 8,
+              fontSize: 12, color: t.textMuted, lineHeight: 1.4,
+            }}>
+              {feedback.grade === "Optimal" ? "Why: " : "The optimal keep — "}{describeKeep(feedback.optKeep)}
             </div>
           )}
         </SectionBlock>

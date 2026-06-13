@@ -3,6 +3,7 @@ import {
   RANKS, SUITS, cardValue, scoreHand, scoreHandTotal, scorePairs, scoreRuns, scoreFlush,
   scoreNobs, scoreHeels, fullDeck, cardKey, combos, shuffle,
 } from "./engine.js";
+import { describeKeep } from "./format.js";
 
 // Terse card constructor for readable canonical hands.
 const C = (rank, suit) => ({ rank, suit });
@@ -209,6 +210,23 @@ describe("impossibility guards", () => {
       expect(FORBIDDEN.has(total)).toBe(false);
     }
   }, 20000);
+});
+
+describe("describeKeep (plain-language why)", () => {
+  it("names a run and a fifteen", () => {
+    const s = describeKeep([C("4","♠"), C("5","♥"), C("6","♦"), C("9","♣")]);
+    expect(s).toMatch(/run/);
+    expect(s).toMatch(/fifteen/);
+  });
+  it("names a pair", () => {
+    expect(describeKeep([C("8","♠"), C("8","♥"), C("2","♦"), C("K","♣")])).toMatch(/pair/);
+  });
+  it("names four to a flush", () => {
+    expect(describeKeep([C("2","♥"), C("6","♥"), C("9","♥"), C("K","♥")])).toMatch(/flush/);
+  });
+  it("falls back gracefully when nothing notable", () => {
+    expect(describeKeep([C("2","♠"), C("7","♥"), C("9","♦"), C("K","♣")])).toBeTruthy();
+  });
 });
 
 describe("deck and combos", () => {
