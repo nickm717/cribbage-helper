@@ -1,5 +1,19 @@
 // ─── Shared formatting / scoring-display helpers ─────────────────────────────
 
+/** @type {Record<string, string>} */
+const RANK_NAMES = { A: "Ace", J: "Jack", Q: "Queen", K: "King" };
+/** @type {Record<string, string>} */
+const SUIT_NAMES = { "♠": "spades", "♥": "hearts", "♦": "diamonds", "♣": "clubs" };
+
+/**
+ * Spoken label for a card, e.g. "Five of hearts" — for aria-label / SR text.
+ * @param {{ rank: string, suit: string }} card @returns {string}
+ */
+export function cardLabel(card) {
+  if (!card) return "empty card slot";
+  return `${RANK_NAMES[card.rank] ?? card.rank} of ${SUIT_NAMES[card.suit] ?? card.suit}`;
+}
+
 /**
  * Efficiency as a 0–100 integer percentage, clamped at 100. Returns `fallback`
  * when there's nothing to divide by (no optimal points yet).

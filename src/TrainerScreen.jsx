@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { rankIdx, isRed, cardKey, fullDeck, scoreHand, analyzeHand } from "./engine.js";
-import { efficiencyPct, tierColor } from "./format.js";
+import { efficiencyPct, tierColor, cardLabel } from "./format.js";
 
 // ─── History persistence ─────────────────────────────────────────────────────
 
@@ -112,15 +112,24 @@ function CardFan({ cards, selected = [], onSelect, dimOthers = false, t }) {
       {cards.map((card, i) => {
         const isSel = selected.includes(i);
         const isDim = dimOthers && !isSel;
+        const interactive = !!onSelect;
         return (
           <div
             key={cardKey(card)}
-            onClick={() => onSelect?.(i)}
+            onClick={interactive ? () => onSelect(i) : undefined}
+            onKeyDown={interactive ? (e => {
+              if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(i); }
+            }) : undefined}
+            role={interactive ? "button" : undefined}
+            tabIndex={interactive ? 0 : undefined}
+            aria-pressed={interactive ? isSel : undefined}
+            aria-label={interactive ? `${cardLabel(card)}${isSel ? ", selected to discard" : ""}` : cardLabel(card)}
             style={{
               marginLeft: i === 0 ? 0 : -OVERLAP,
               transform: isSel ? `translateY(-${LIFT}px)` : "translateY(0)",
               transition: "transform 200ms cubic-bezier(0.22, 0.8, 0.36, 1)",
-              cursor: onSelect ? "pointer" : "default",
+              cursor: interactive ? "pointer" : "default",
+              borderRadius: 8,
               WebkitTapHighlightColor: "transparent",
             }}
           >

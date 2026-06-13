@@ -3,6 +3,7 @@ import TrainerScreenComponent from "./TrainerScreen.jsx";
 import HistoryScreen from "./HistoryScreen.jsx";
 import { isRed, cardKey, scoreHand, RANKS, SUITS } from "./engine.js";
 import { useTheme } from "./theme.js";
+import { cardLabel } from "./format.js";
 
 
 function useIsDesktop() {
@@ -20,41 +21,53 @@ function useIsDesktop() {
 function CardPill({ card, active, onClick, onRemove, t }) {
   const red = card && isRed(card.suit);
   const filled = !!card;
+  // A container holds the main pick button and, when filled, a sibling remove
+  // button. Buttons are never nested (invalid HTML); the remove control sits on
+  // top as its own focusable, labeled control.
   return (
-    <button
-      onClick={onClick}
-      style={{
-        flex: 1, height: "clamp(38px, 11vw, 44px)", borderRadius: 8, border: "none",
-        // Filled = real card lying on felt (cream + Spectral). Empty = felt slot placeholder.
-        background: filled ? t.cardFace : t.feltMid,
-        outline: active ? `2px solid ${t.goldBright}` : `2px solid transparent`,
-        outlineOffset: 1,
-        cursor: "pointer", position: "relative",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        boxShadow: filled ? "0 2px 8px oklch(0% 0 0 / 0.35), 0 1px 2px oklch(0% 0 0 / 0.25)" : "none",
-        transition: "outline 0.1s, box-shadow 0.15s",
-        WebkitTapHighlightColor: "transparent",
-      }}
-    >
-      {filled ? (
-        <>
+    <div style={{ flex: 1, position: "relative", display: "flex" }}>
+      <button
+        onClick={onClick}
+        aria-label={filled ? `${cardLabel(card)}, slot filled` : "Empty slot, tap to fill"}
+        aria-pressed={active}
+        style={{
+          flex: 1, height: "clamp(38px, 11vw, 44px)", borderRadius: 8, border: "none",
+          // Filled = real card lying on felt (cream + Spectral). Empty = felt slot placeholder.
+          background: filled ? t.cardFace : t.feltMid,
+          outline: active ? `2px solid ${t.goldBright}` : `2px solid transparent`,
+          outlineOffset: 1,
+          cursor: "pointer", position: "relative",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: filled ? "0 2px 8px oklch(0% 0 0 / 0.35), 0 1px 2px oklch(0% 0 0 / 0.25)" : "none",
+          transition: "outline 0.1s, box-shadow 0.15s",
+          WebkitTapHighlightColor: "transparent",
+        }}
+      >
+        {filled ? (
           <span style={{
             fontSize: 16, fontWeight: 700,
             color: red ? t.suitRed : t.textOnCard,
             fontFamily: t.fontCard, lineHeight: 1,
           }}>{card.rank}{card.suit}</span>
-          <span
-            onClick={e => { e.stopPropagation(); onRemove(); }}
-            style={{
-              position: "absolute", top: 3, right: 5,
-              fontSize: 11, color: "oklch(40% 0.020 80)", cursor: "pointer", lineHeight: 1,
-            }}
-          >✕</span>
-        </>
-      ) : (
-        <span style={{ fontSize: 16, color: active ? t.goldBright : t.textDisabled }}>·</span>
+        ) : (
+          <span style={{ fontSize: 16, color: active ? t.goldBright : t.textDisabled }}>·</span>
+        )}
+      </button>
+      {filled && (
+        <button
+          onClick={e => { e.stopPropagation(); onRemove(); }}
+          aria-label={`Remove ${cardLabel(card)}`}
+          style={{
+            position: "absolute", top: 0, right: 0,
+            width: 24, height: 24, padding: 0, border: "none",
+            background: "transparent", cursor: "pointer",
+            display: "flex", alignItems: "flex-start", justifyContent: "flex-end",
+            color: "oklch(40% 0.020 80)", fontSize: 11, lineHeight: 1,
+            WebkitTapHighlightColor: "transparent",
+          }}
+        ><span style={{ padding: "3px 5px" }} aria-hidden="true">✕</span></button>
       )}
-    </button>
+    </div>
   );
 }
 
