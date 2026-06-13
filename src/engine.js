@@ -55,7 +55,9 @@ export function combos(arr, size) {
 
 /** Score every 15-summing subset (2 pts each). @param {Card[]} cards @returns {ScoreResult} */
 export function scoreFifteens(cards) {
-  let pts = 0, log = [];
+  let pts = 0;
+  /** @type {ScorePart[]} */
+  const log = [];
   for (let sz = 2; sz <= 5; sz++)
     combos(cards, sz).forEach(combo => {
       if (combo.reduce((s, c) => s + cardValue(c.rank), 0) === 15)
@@ -96,8 +98,11 @@ export function scorePairs(cards) {
 
 /** Score the longest runs present (each run worth its length). @param {Card[]} cards @returns {ScoreResult} */
 export function scoreRuns(cards) {
-  let pts = 0, log = [];
+  let pts = 0;
+  /** @type {ScorePart[]} */
+  const log = [];
   for (let sz = 5; sz >= 3; sz--) {
+    /** @type {Card[][]} */
     const runs = [];
     combos(cards, sz).forEach(combo => {
       const idxs = combo.map(c => rankIdx(c.rank)).sort((a, b) => a - b);
@@ -152,7 +157,7 @@ export function scoreHeels(starter) {
  * value bounded by the cribbage impossibility theorem (never 19/25/26/27).
  * @param {Card[]} hand4 @param {Card|null} starter @param {boolean} [isCrib=false] @returns {HandScore}
  */
-export function scoreHand(hand4, starter, isCrib) {
+export function scoreHand(hand4, starter, isCrib = false) {
   const all5 = starter ? [...hand4, starter] : [...hand4];
   const parts = [scoreFifteens(all5), scorePairs(all5), scoreRuns(all5),
     scoreFlush(hand4, starter, isCrib), scoreNobs(hand4, starter)];
