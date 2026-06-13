@@ -11,7 +11,11 @@ export function cardValue(r) {
 export function rankIdx(r) { return RANKS.indexOf(r); }
 export function isRed(s) { return s === "♥" || s === "♦"; }
 export function cardKey(c) { return c.rank + c.suit; }
-export function fullDeck() { return SUITS.flatMap(s => RANKS.map(r => ({ rank: r, suit: s }))); }
+
+// Cached constant — the deck never changes so there's no reason to rebuild it
+// on every call. fullDeck() returns this reference for backward compatibility.
+const FULL_DECK = SUITS.flatMap(s => RANKS.map(r => ({ rank: r, suit: s })));
+export function fullDeck() { return FULL_DECK; }
 
 export function combos(arr, size) {
   if (size === 0) return [[]];
@@ -34,7 +38,7 @@ export function scorePairs(cards) {
   let pts = 0, raw = [];
   combos(cards, 2).forEach(([a, b]) => { if (a.rank === b.rank) { pts += 2; raw.push([a, b]); } });
   if (!pts) return { pts: 0, log: [] };
-  const uniq = raw.flatMap(p => p).filter((c, i, a) => a.findIndex(x => cardKey(x) === cardKey(c)) === i);
+  const uniq = [...new Map(raw.flat().map(c => [cardKey(c), c])).values()];
   const n = pts / 2;
   const reason = n === 1 ? "Pair" : n === 3 ? "Pair Royal (3 of a kind)" : "Double Pair Royal (4 of a kind)";
   return { pts, log: [{ pts, reason, cards: uniq }] };
@@ -87,15 +91,24 @@ export function scoreHand(hand4, starter, isCrib) {
 // evCrib: deterministic stride-based sampling. For each possible cut we stride
 // through opponent pairs at a fixed interval, giving ~15 samples per cut.
 // With ~46 remaining cards that's 46 × 15 ≈ 690 scoreHand calls per combo.
+//
+// Internal helpers take a pre-computed `rem` array so callers that evaluate
+// multiple combos against the same remaining deck (bestKeep, analyzeHand) only
+// pay the filter cost once instead of once per combo.
 
-export function evHand(h4, exclSet) {
-  const rem = fullDeck().filter(c => !exclSet.has(cardKey(c)));
-  if (!rem.length) return 0;
-  return rem.reduce((s, c) => s + scoreHand(h4, c, false).total, 0) / rem.length;
+function _scoreAll(h4, rem) {
+  if (!rem.length) return { min: 0, max: 0, avg: 0 };
+  let min = Infinity, max = -Infinity, sum = 0;
+  for (const c of rem) {
+    const s = scoreHand(h4, c, false).total;
+    if (s < min) min = s;
+    if (s > max) max = s;
+    sum += s;
+  }
+  return { min, max, avg: sum / rem.length };
 }
 
-export function evCrib(d2, exclSet) {
-  const rem = fullDeck().filter(c => !exclSet.has(cardKey(c)));
+function _evCrib(d2, rem) {
   const n = rem.length;
   if (n < 3) return 0;
   const pairsPerCut = (n - 1) * (n - 2) / 2;
@@ -118,13 +131,24 @@ export function evCrib(d2, exclSet) {
   return count > 0 ? total / count : 0;
 }
 
+export function evHand(h4, exclSet) {
+  const rem = FULL_DECK.filter(c => !exclSet.has(cardKey(c)));
+  return _scoreAll(h4, rem).avg;
+}
+
+export function evCrib(d2, exclSet) {
+  const rem = FULL_DECK.filter(c => !exclSet.has(cardKey(c)));
+  return _evCrib(d2, rem);
+}
+
 export function bestKeep(h6, isDealer) {
   const exclSet = new Set(h6.map(cardKey));
+  const rem = FULL_DECK.filter(c => !exclSet.has(cardKey(c)));
   let best = null, bestEV = -Infinity;
   for (const keep of combos(h6, 4)) {
     const discard = h6.filter(c => !keep.some(k => cardKey(k) === cardKey(c)));
-    const hEV = evHand(keep, exclSet);
-    const cEV = evCrib(discard, exclSet);
+    const hEV = _scoreAll(keep, rem).avg;
+    const cEV = _evCrib(discard, rem);
     const ev = hEV + (isDealer ? 0.5 : -0.5) * cEV;
     if (ev > bestEV) { bestEV = ev; best = { keep, discard, hEV, cEV, ev }; }
   }
@@ -135,16 +159,8 @@ export function bestKeep(h6, isDealer) {
 
 // Returns { min, max, avg } scoring h4 against every possible cut in the deck.
 export function handStats(h4, exclSet) {
-  const rem = fullDeck().filter(c => !exclSet.has(cardKey(c)));
-  if (!rem.length) return { min: 0, max: 0, avg: 0 };
-  let min = Infinity, max = -Infinity, sum = 0;
-  for (const c of rem) {
-    const s = scoreHand(h4, c, false).total;
-    if (s < min) min = s;
-    if (s > max) max = s;
-    sum += s;
-  }
-  return { min, max, avg: sum / rem.length };
+  const rem = FULL_DECK.filter(c => !exclSet.has(cardKey(c)));
+  return _scoreAll(h4, rem);
 }
 
 // Evaluates all 15 C(6,4) keeps and returns them sorted by combinedEV descending.
@@ -152,10 +168,13 @@ export function handStats(h4, exclSet) {
 // rank is 0–100 relative to the best option (best = 100).
 export function analyzeHand(h6, isDealer) {
   const exclSet = new Set(h6.map(cardKey));
+  // Compute the remaining deck once — shared across all 15 combos
+  const rem = FULL_DECK.filter(c => !exclSet.has(cardKey(c)));
+
   const options = combos(h6, 4).map(keep => {
     const discard = h6.filter(c => !keep.some(k => cardKey(k) === cardKey(c)));
-    const { min: handMin, max: handMax, avg: handAvg } = handStats(keep, exclSet);
-    const cribAvg = evCrib(discard, exclSet);
+    const { min: handMin, max: handMax, avg: handAvg } = _scoreAll(keep, rem);
+    const cribAvg = _evCrib(discard, rem);
     const combinedEV = handAvg + (isDealer ? 0.5 : -0.5) * cribAvg;
     return { keep, discard, handMin, handMax, handAvg, cribAvg, combinedEV, rank: 0 };
   });

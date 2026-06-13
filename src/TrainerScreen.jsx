@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { cardValue, rankIdx, isRed, cardKey, fullDeck, combos, scoreFifteens, scorePairs, scoreRuns, scoreFlush, scoreNobs, scoreNibs, scoreHand, evHand, evCrib, bestKeep, analyzeHand } from "./engine.js";
+import { rankIdx, isRed, cardKey, fullDeck, scoreHand, analyzeHand } from "./engine.js";
 
 // ─── History persistence ─────────────────────────────────────────────────────
 
@@ -34,7 +34,11 @@ function saveHandToHistory(grade, yourEV, optEV) {
     if (sessions.length >= 100) sessions.shift();
     sessions.push(entry);
   }
-  localStorage.setItem("cribbage_history", JSON.stringify(sessions));
+  try {
+    localStorage.setItem("cribbage_history", JSON.stringify(sessions));
+  } catch {
+    // Storage quota exceeded; skip to avoid crashing the app
+  }
 }
 
 // ─── Card Components ─────────────────────────────────────────────────────────
@@ -167,7 +171,7 @@ function StatChip({ label, value, t }) {
   return (
     <div style={{ textAlign: "center" }}>
       <div style={{ fontSize: 9, color: t.textMuted, letterSpacing: 1, textTransform: "uppercase" }}>{label}</div>
-      <div style={{ fontSize: 14, fontWeight: 700, color: t.textPrimary, fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.01em" }}>{value}</div>
+      <div style={{ fontSize: 14, fontWeight: 700, color: t.textPrimary, fontFamily: t.fontUi, letterSpacing: "-0.01em" }}>{value}</div>
     </div>
   );
 }
@@ -244,15 +248,6 @@ function SectionBlock({ title, children, t, accent }) {
     }}>
       {title && <div style={{ fontSize: 9, color: t.textMuted, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>{title}</div>}
       {children}
-    </div>
-  );
-}
-
-function EVCell({ label, value, t }) {
-  return (
-    <div style={{ background: t.surfaceSunken, borderRadius: 8, padding: "8px 10px" }}>
-      <div style={{ fontSize: 9, color: t.textMuted, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 2 }}>{label}</div>
-      <div style={{ fontSize: 18, fontWeight: 600, color: t.textPrimary, fontFamily: t.fontMono, letterSpacing: "-0.01em" }}>{value}</div>
     </div>
   );
 }
@@ -406,7 +401,7 @@ function DiscardOptionRow({ option, isPlayerDiscard, isOptimal, t }) {
   );
 }
 
-function DiscardOptionsTable({ allOptions, discarded, optKeep, isDealer, t }) {
+function DiscardOptionsTable({ allOptions, discarded, optKeep, t }) {
   const [expanded, setExpanded] = useState(false);
   if (!allOptions.length) return null;
 
@@ -465,8 +460,8 @@ function DiscardOptionsTable({ allOptions, discarded, optKeep, isDealer, t }) {
 
 function ScoreBody({ feedback, kept, discarded, cut, handResult, cribResult, optHandResult, optResult, allOptions, isDealer, session, t }) {
   const gradeColor = !feedback ? t.accentYellow
-    : feedback.grade === "Optimal" ? "#34d399"
-    : feedback.grade === "Close" ? "#fb923c" : "#f87171";
+    : feedback.grade === "Optimal" ? t.scorePositive
+    : feedback.grade === "Close" ? t.goldBright : t.scoreMiss;
 
   // Session totals including this hand (for live display before session state is committed)
   const thisYour = (handResult?.total || 0) + (isDealer && cribResult ? cribResult.total : 0);
@@ -477,7 +472,7 @@ function ScoreBody({ feedback, kept, discarded, cut, handResult, cribResult, opt
   const totalYourEV = session.yourEV + (feedback?.playerEV ?? 0);
   const totalOptEV  = session.optEV  + (feedback?.optEV    ?? 0);
   const eff = totalOptEV > 0 ? Math.min(100, Math.round(totalYourEV / totalOptEV * 100)) : 100;
-  const effColor = eff >= 90 ? "#34d399" : eff >= 75 ? "#fb923c" : "#f87171";
+  const effColor = eff >= 90 ? t.scorePositive : eff >= 75 ? t.goldBright : t.scoreMiss;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -573,7 +568,6 @@ function ScoreBody({ feedback, kept, discarded, cut, handResult, cribResult, opt
           allOptions={allOptions}
           discarded={discarded}
           optKeep={feedback?.optKeep || null}
-          isDealer={isDealer}
           t={t}
         />
       )}
@@ -626,19 +620,24 @@ export default function TrainerScreen({ t }) {
     const keptCards = hand6.filter((_, i) => !selected.includes(i));
     const discardedCards = hand6.filter((_, i) => selected.includes(i));
 
-    // ── EV analysis (deterministic — same hand always gives same result) ──
-    const exclSet = new Set(hand6.map(cardKey));
-    const playerHandEV = evHand(keptCards, exclSet);
-    const playerCribEV = evCrib(discardedCards, exclSet);
-    const playerEV = playerHandEV + (isDealer ? 0.5 : -0.5) * playerCribEV;
-    const opt = bestKeep(hand6, isDealer);
-    const evDiff = playerEV - opt.ev;
+    // ── Full discard analysis — all 15 options ranked by combined EV ────────
+    // Player EV is looked up from the same table, avoiding a duplicate analysis pass.
+    const options = analyzeHand(hand6, isDealer);
+    const optBest = options[0];
+
+    const playerKeepKey = keptCards.map(cardKey).sort().join(",");
+    const playerOption = options.find(o => o.keep.map(cardKey).sort().join(",") === playerKeepKey);
+    const playerHandEV = playerOption?.handAvg ?? 0;
+    const playerCribEV = playerOption?.cribAvg ?? 0;
+    const playerEV = playerOption?.combinedEV ?? 0;
+    const evDiff = playerEV - optBest.combinedEV;
     // "Optimal" = you found the single best keep (within rounding of the approximation).
     // "Close" = within 1.5 EV points. "Suboptimal" = further off.
     const grade = evDiff >= -0.5 ? "Optimal" : evDiff >= -1.5 ? "Close" : "Suboptimal";
-    const fb = { playerEV, playerHandEV, playerCribEV, optEV: opt.ev, grade, evDiff, optKeep: opt.keep };
+    const fb = { playerEV, playerHandEV, playerCribEV, optEV: optBest.combinedEV, grade, evDiff, optKeep: optBest.keep };
 
     // ── Draw cut card ──────────────────────────────────────────────────────
+    const exclSet = new Set(hand6.map(cardKey));
     const remaining = fullDeck().filter(c => !exclSet.has(cardKey(c)));
     const cutCard = remaining[Math.floor(Math.random() * remaining.length)];
 
@@ -649,21 +648,15 @@ export default function TrainerScreen({ t }) {
     let cResult = null;
     if (isDealer) {
       const rem2 = remaining.filter(c => cardKey(c) !== cardKey(cutCard));
-      // Opponent discards: pick two cards spaced across the remaining deck
-      // (deterministic-ish, but the cut itself is still random so this is fine)
-      const stride = Math.floor(rem2.length / 3);
-      const oDiscard = [rem2[stride], rem2[stride * 2]];
+      const oDiscard = [...rem2].sort(() => Math.random() - 0.5).slice(0, 2);
       cResult = scoreHand([...discardedCards, ...oDiscard], cutCard, true);
     }
 
     // ── Score what the optimal keep would have gotten with this cut ────────
-    const optH = scoreHand(opt.keep, cutCard, false);
-
-    // ── Full discard analysis — all 15 options ranked by combined EV ────────
-    const options = analyzeHand(hand6, isDealer);
+    const optH = scoreHand(optBest.keep, cutCard, false);
 
     setFeedback(fb);
-    setOptResult(opt);
+    setOptResult(optBest);
     setKept(keptCards);
     setDiscarded(discardedCards);
     setCut(cutCard);
