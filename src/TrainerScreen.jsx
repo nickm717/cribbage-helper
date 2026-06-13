@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { rankIdx, isRed, cardKey, fullDeck, scoreHand, analyzeHand } from "./engine.js";
+import { efficiencyPct, tierColor } from "./format.js";
 
 // ─── History persistence ─────────────────────────────────────────────────────
 
@@ -19,7 +20,7 @@ function saveHandToHistory(grade, yourEV, optEV) {
     last.hands += 1;
     last.yourEV = (last.yourEV || 0) + yourEV;
     last.optEV  = (last.optEV  || 0) + optEV;
-    last.efficiency = last.optEV > 0 ? Math.min(100, Math.round(last.yourEV / last.optEV * 100)) : 100;
+    last.efficiency = efficiencyPct(last.yourEV, last.optEV);
     last.grades[grade] = (last.grades[grade] || 0) + 1;
   } else {
     const entry = {
@@ -28,7 +29,7 @@ function saveHandToHistory(grade, yourEV, optEV) {
       hands: 1,
       yourEV,
       optEV,
-      efficiency: optEV > 0 ? Math.min(100, Math.round(yourEV / optEV * 100)) : 100,
+      efficiency: efficiencyPct(yourEV, optEV),
       grades: { Optimal: 0, Close: 0, Suboptimal: 0, [grade]: 1 },
     };
     if (sessions.length >= 100) sessions.shift();
@@ -183,11 +184,7 @@ function StatChip({ label, value, t }) {
 // label + metadata to the big number's baseline so the whole row is one line tall.
 function SessionStatStrip({ hands, yourEV, optEV, efficiency, t }) {
   const hasData = hands > 0;
-  const tier = !hasData ? null
-    : efficiency >= 90 ? t.tierGrade[3]  // green
-    : efficiency >= 75 ? t.tierGrade[2]  // orange
-    : efficiency >= 60 ? t.tierGrade[1]  // red
-    : t.tierGrade[0];                    // purple
+  const tier = hasData ? tierColor(efficiency, t) : null;
   return (
     <div style={{
       display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -471,7 +468,7 @@ function ScoreBody({ feedback, kept, discarded, cut, handResult, cribResult, opt
   const hands = session.hands + 1;
   const totalYourEV = session.yourEV + (feedback?.playerEV ?? 0);
   const totalOptEV  = session.optEV  + (feedback?.optEV    ?? 0);
-  const eff = totalOptEV > 0 ? Math.min(100, Math.round(totalYourEV / totalOptEV * 100)) : 100;
+  const eff = efficiencyPct(totalYourEV, totalOptEV);
   const effColor = eff >= 90 ? t.scorePositive : eff >= 75 ? t.goldBright : t.scoreMiss;
 
   return (
@@ -684,8 +681,7 @@ export default function TrainerScreen({ t }) {
     dealNewHand();
   }
 
-  const sessionEfficiency = session.optEV > 0
-    ? Math.min(100, Math.round(session.yourEV / session.optEV * 100)) : 100;
+  const sessionEfficiency = efficiencyPct(session.yourEV, session.optEV);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: t.feltBase }}>

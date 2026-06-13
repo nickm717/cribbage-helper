@@ -1,13 +1,7 @@
 import { useHistory } from "./useHistory.js";
+import { efficiencyPct, tierColor } from "./format.js";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function tierColor(efficiency, t) {
-  if (efficiency >= 90) return t.tierGrade[3];
-  if (efficiency >= 75) return t.tierGrade[2];
-  if (efficiency >= 60) return t.tierGrade[1];
-  return t.tierGrade[0];
-}
 
 function fmtDate(isoDate) {
   const [y, m, d] = isoDate.split("-");
@@ -189,8 +183,8 @@ export default function HistoryScreen({ t }) {
   const totalYourEV = sessions.reduce((s, x) => s + (x.yourEV ?? 0), 0);
   const totalOptEV  = sessions.reduce((s, x) => s + (x.optEV  ?? 0), 0);
   const lifetimeEff = totalOptEV > 0
-    ? Math.min(100, Math.round(totalYourEV / totalOptEV * 100))
-    : (totalOpt > 0 ? Math.min(100, Math.round(totalYour / totalOpt * 100)) : 100);
+    ? efficiencyPct(totalYourEV, totalOptEV)
+    : (totalOpt > 0 ? efficiencyPct(totalYour, totalOpt) : 100);
   const bestEff     = Math.min(100, Math.max(...sessions.map(s => s.efficiency)));
 
   const sevenDaysAgo = new Date();
@@ -202,8 +196,8 @@ export default function HistoryScreen({ t }) {
   const recentYourEV = recentSessions.reduce((s, x) => s + (x.yourEV ?? 0), 0);
   const recentOptEV  = recentSessions.reduce((s, x) => s + (x.optEV  ?? 0), 0);
   const sevenDayEff = recentOptEV > 0
-    ? Math.min(100, Math.round(recentYourEV / recentOptEV * 100))
-    : (recentOpt > 0 ? Math.min(100, Math.round(recentYour / recentOpt * 100)) : null);
+    ? efficiencyPct(recentYourEV, recentOptEV)
+    : (recentOpt > 0 ? efficiencyPct(recentYour, recentOpt) : null);
 
   // Daily aggregation for sparkline (last 14 days)
   const fourteenDaysAgo = new Date();
@@ -224,8 +218,8 @@ export default function HistoryScreen({ t }) {
     .map(([date, d]) => ({
       date,
       efficiency: d.optEV > 0
-        ? Math.min(100, Math.round(d.yourEV / d.optEV * 100))
-        : (d.optPts > 0 ? Math.min(100, Math.round(d.yourPts / d.optPts * 100)) : 100),
+        ? efficiencyPct(d.yourEV, d.optEV)
+        : (d.optPts > 0 ? efficiencyPct(d.yourPts, d.optPts) : 100),
     }));
 
   const recentDisplaySessions = [...sessions].reverse().slice(0, 20);
