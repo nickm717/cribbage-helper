@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
-import { rankIdx, isRed, cardKey, fullDeck, scoreHand, analyzeHand, shuffle } from "./engine.js";
+import { useState, useEffect, useReducer, useRef } from "react";
+import { rankIdx, isRed, cardKey, fullDeck, scoreHand, shuffle } from "./engine.js";
 import { efficiencyPct, tierColor, cardLabel } from "./format.js";
+import { useAnalyzeWorker } from "./useAnalyzeWorker.js";
 
 // ─── History persistence ─────────────────────────────────────────────────────
 
@@ -339,6 +340,31 @@ function DiscardBody({ isDealer, t }) {
   return <CribDestination isDealer={isDealer} t={t} />;
 }
 
+// CalculatingBody: the brief reveal-pending state while the EV worker runs.
+// Surfaces real progress so a slow device shows motion tied to work, not a
+// decorative spinner.
+function CalculatingBody({ progress, t }) {
+  const pct = Math.round(progress * 100);
+  return (
+    <div role="status" aria-live="polite" style={{
+      paddingTop: 40, display: "flex", flexDirection: "column",
+      alignItems: "center", gap: 14,
+    }}>
+      <div style={{
+        fontSize: 9, fontWeight: 700, color: t.textMuted,
+        letterSpacing: "0.12em", textTransform: "uppercase", lineHeight: 1,
+      }}>Scoring the cut</div>
+      <div style={{
+        fontSize: 24, fontWeight: 800, color: t.textPrimary, letterSpacing: "-0.01em",
+      }}>Calculating EV…</div>
+      <div style={{ width: "70%", maxWidth: 240, background: t.feltLift, borderRadius: 999, height: 4, overflow: "hidden" }}>
+        <div style={{ height: "100%", width: `${pct}%`, background: t.goldBright, borderRadius: 999, transition: "width 120ms linear" }} />
+      </div>
+      <div style={{ fontFamily: t.fontMono, fontSize: 12, color: t.textSecondary }}>{pct}%</div>
+    </div>
+  );
+}
+
 // ─── Discard analysis table ──────────────────────────────────────────────────
 
 function RankBadge({ rank, t }) {
@@ -582,95 +608,138 @@ function ScoreBody({ feedback, kept, discarded, cut, handResult, cribResult, opt
   );
 }
 
+// ─── Round state (reducer) ───────────────────────────────────────────────────
+//
+// All per-hand state lives in one reducer instead of a dozen useState slices, so
+// a transition can never leave half the round updated. `phase` drives the UI:
+// discard → scoring (EV worker running) → score.
+
+const INITIAL_ROUND = {
+  phase: "discard",
+  isDealer: true,
+  hand6: [],
+  selected: [],
+  kept: [],
+  discarded: [],
+  cut: null,
+  handResult: null,
+  cribResult: null,
+  optResult: null,
+  optHandResult: null,
+  feedback: null,
+  allOptions: [],
+  progress: 0,
+  error: null,
+};
+
+function roundReducer(state, action) {
+  switch (action.type) {
+    case "DEAL":
+      return { ...INITIAL_ROUND, hand6: action.hand6, isDealer: action.isDealer };
+    case "TOGGLE_SELECT": {
+      const { selected } = state;
+      const next = selected.includes(action.idx)
+        ? selected.filter(i => i !== action.idx)
+        : selected.length >= 2 ? selected : [...selected, action.idx];
+      return { ...state, selected: next };
+    }
+    case "START_SCORING":
+      return {
+        ...state, phase: "scoring", progress: 0, error: null,
+        kept: action.kept, discarded: action.discarded, cut: action.cut,
+        handResult: action.handResult, cribResult: action.cribResult,
+      };
+    case "PROGRESS":
+      return { ...state, progress: action.progress };
+    case "ANALYSIS_DONE":
+      return {
+        ...state, phase: "score",
+        feedback: action.feedback, optResult: action.optResult,
+        optHandResult: action.optHandResult, allOptions: action.allOptions,
+      };
+    case "ANALYSIS_ERROR":
+      // Degrade gracefully: the hand/crib score still shows; the EV grade and
+      // options are simply absent with a note.
+      return { ...state, phase: "score", error: action.error };
+    default:
+      return state;
+  }
+}
+
 // ─── Main TrainerScreen ──────────────────────────────────────────────────────
 
 export default function TrainerScreen({ t }) {
   const [session, setSession] = useState({ hands: 0, yourPts: 0, optPts: 0, yourEV: 0, optEV: 0 });
-  const [phase, setPhase] = useState("discard");
-  const [isDealer, setIsDealer] = useState(true);
-  const [hand6, setHand6] = useState([]);
-  const [selected, setSelected] = useState([]);
-  const [kept, setKept] = useState([]);
-  const [discarded, setDiscarded] = useState([]);
-  const [cut, setCut] = useState(null);
-  const [optResult, setOptResult] = useState(null);
-  const [feedback, setFeedback] = useState(null);
-  const [handResult, setHandResult] = useState(null);
-  const [cribResult, setCribResult] = useState(null);
-  const [optHandResult, setOptHandResult] = useState(null);
-  const [allOptions, setAllOptions] = useState([]);
+  const [round, dispatch] = useReducer(roundReducer, INITIAL_ROUND);
+  const { analyze, cancel } = useAnalyzeWorker();
+  // Monotonic token: any analysis whose token is stale (a new hand was dealt) is
+  // ignored when it resolves — this is the cancellation mechanism.
+  const tokenRef = useRef(0);
+
+  const {
+    phase, isDealer, hand6, selected, kept, discarded, cut,
+    handResult, cribResult, optResult, optHandResult, feedback, allOptions, progress, error,
+  } = round;
 
   function dealNewHand() {
+    tokenRef.current++;
+    cancel();
     const deck = shuffle(fullDeck());
     const newHand6 = deck.slice(0, 6).sort((a, b) => rankIdx(a.rank) - rankIdx(b.rank));
-    setHand6(newHand6);
-    setIsDealer(Math.random() > 0.5);
-    setSelected([]); setKept([]); setDiscarded([]); setCut(null);
-    setFeedback(null); setOptResult(null);
-    setHandResult(null); setCribResult(null); setOptHandResult(null);
-    setAllOptions([]);
-    setPhase("discard");
+    dispatch({ type: "DEAL", hand6: newHand6, isDealer: Math.random() > 0.5 });
   }
 
   // Initial deal
   useEffect(() => { dealNewHand(); }, []); // eslint-disable-line
 
-  function toggleSelect(idx) {
-    setSelected(prev =>
-      prev.includes(idx) ? prev.filter(i => i !== idx) : prev.length >= 2 ? prev : [...prev, idx]
-    );
-  }
+  function toggleSelect(idx) { dispatch({ type: "TOGGLE_SELECT", idx }); }
 
-  function confirmDiscard() {
+  async function confirmDiscard() {
     if (selected.length !== 2) return;
     const keptCards = hand6.filter((_, i) => !selected.includes(i));
     const discardedCards = hand6.filter((_, i) => selected.includes(i));
 
-    // ── Full discard analysis — all 15 options ranked by combined EV ────────
-    // Player EV is looked up from the same table, avoiding a duplicate analysis pass.
-    const options = analyzeHand(hand6, isDealer);
-    const optBest = options[0];
-
-    const playerKeepKey = keptCards.map(cardKey).sort().join(",");
-    const playerOption = options.find(o => o.keep.map(cardKey).sort().join(",") === playerKeepKey);
-    const playerHandEV = playerOption?.handAvg ?? 0;
-    const playerCribEV = playerOption?.cribAvg ?? 0;
-    const playerEV = playerOption?.combinedEV ?? 0;
-    const evDiff = playerEV - optBest.combinedEV;
-    // "Optimal" = you found the single best keep (within rounding of the approximation).
-    // "Close" = within 1.5 EV points. "Suboptimal" = further off.
-    const grade = evDiff >= -0.5 ? "Optimal" : evDiff >= -1.5 ? "Close" : "Suboptimal";
-    const fb = { playerEV, playerHandEV, playerCribEV, optEV: optBest.combinedEV, grade, evDiff, optKeep: optBest.keep };
-
-    // ── Draw cut card ──────────────────────────────────────────────────────
+    // ── Draw cut card and score the shown hand/crib (cheap, on main thread) ──
     const exclSet = new Set(hand6.map(cardKey));
     const remaining = fullDeck().filter(c => !exclSet.has(cardKey(c)));
     const cutCard = remaining[Math.floor(Math.random() * remaining.length)];
-
-    // ── Score hand ─────────────────────────────────────────────────────────
     const hResult = scoreHand(keptCards, cutCard, false);
-
-    // ── Score crib (dealer only — simulate 2 random opponent discards) ─────
     let cResult = null;
     if (isDealer) {
       const rem2 = remaining.filter(c => cardKey(c) !== cardKey(cutCard));
-      const oDiscard = shuffle(rem2).slice(0, 2);
-      cResult = scoreHand([...discardedCards, ...oDiscard], cutCard, true);
+      cResult = scoreHand([...discardedCards, ...shuffle(rem2).slice(0, 2)], cutCard, true);
     }
 
-    // ── Score what the optimal keep would have gotten with this cut ────────
-    const optH = scoreHand(optBest.keep, cutCard, false);
+    const token = ++tokenRef.current;
+    dispatch({
+      type: "START_SCORING",
+      kept: keptCards, discarded: discardedCards, cut: cutCard,
+      handResult: hResult, cribResult: cResult,
+    });
 
-    setFeedback(fb);
-    setOptResult(optBest);
-    setKept(keptCards);
-    setDiscarded(discardedCards);
-    setCut(cutCard);
-    setHandResult(hResult);
-    setCribResult(cResult);
-    setOptHandResult(optH);
-    setAllOptions(options);
-    setPhase("score");
+    // ── Heavy EV analysis runs in the worker; result matched by token ───────
+    try {
+      const options = await analyze(hand6, isDealer, (done, total) => {
+        if (token === tokenRef.current) dispatch({ type: "PROGRESS", progress: done / total });
+      });
+      if (token !== tokenRef.current) return; // a new hand was dealt; drop result
+
+      const optBest = options[0];
+      const playerKeepKey = keptCards.map(cardKey).sort().join(",");
+      const playerOption = options.find(o => o.keep.map(cardKey).sort().join(",") === playerKeepKey);
+      const playerEV = playerOption?.combinedEV ?? 0;
+      const evDiff = playerEV - optBest.combinedEV;
+      // "Optimal" = best keep within rounding. "Close" = within 1.5 EV. Else "Suboptimal".
+      const grade = evDiff >= -0.5 ? "Optimal" : evDiff >= -1.5 ? "Close" : "Suboptimal";
+      const fb = {
+        playerEV, playerHandEV: playerOption?.handAvg ?? 0, playerCribEV: playerOption?.cribAvg ?? 0,
+        optEV: optBest.combinedEV, grade, evDiff, optKeep: optBest.keep,
+      };
+      const optH = scoreHand(optBest.keep, cutCard, false);
+      dispatch({ type: "ANALYSIS_DONE", feedback: fb, optResult: optBest, optHandResult: optH, allOptions: options });
+    } catch (err) {
+      if (token === tokenRef.current) dispatch({ type: "ANALYSIS_ERROR", error: String(err?.message || err) });
+    }
   }
 
   function handleDealNewHand() {
@@ -691,6 +760,7 @@ export default function TrainerScreen({ t }) {
   }
 
   const sessionEfficiency = efficiencyPct(session.yourEV, session.optEV);
+  const revealCards = phase === "scoring" || phase === "score";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: t.feltBase }}>
@@ -714,15 +784,27 @@ export default function TrainerScreen({ t }) {
       <div style={{ flex: 1, overflowY: "auto", padding: "14px 16px 8px", background: t.feltDeep }}>
 
         {phase === "discard" && <DiscardBody isDealer={isDealer} t={t} />}
+        {phase === "scoring" && <CalculatingBody progress={progress} t={t} />}
         {phase === "score" && (
-          <ScoreBody
-            feedback={feedback}
-            kept={kept} discarded={discarded} cut={cut}
-            handResult={handResult} cribResult={cribResult}
-            optHandResult={optHandResult} optResult={optResult}
-            allOptions={allOptions}
-            isDealer={isDealer} session={session} t={t}
-          />
+          <>
+            {error && (
+              <div style={{
+                marginBottom: 10, padding: "10px 14px", borderRadius: 8,
+                background: t.feltMid, border: `1px solid ${t.scoreMiss}`,
+                color: t.textSecondary, fontSize: 13,
+              }}>
+                Couldn't compute the EV breakdown for this hand. Your score is shown below.
+              </div>
+            )}
+            <ScoreBody
+              feedback={feedback}
+              kept={kept} discarded={discarded} cut={cut}
+              handResult={handResult} cribResult={cribResult}
+              optHandResult={optHandResult} optResult={optResult}
+              allOptions={allOptions}
+              isDealer={isDealer} session={session} t={t}
+            />
+          </>
         )}
 
       </div>
@@ -744,7 +826,7 @@ export default function TrainerScreen({ t }) {
               t={t}
             />
           )}
-          {phase === "score" && kept.length > 0 && (
+          {revealCards && kept.length > 0 && (
             <div style={{ display: "flex", alignItems: "flex-end", gap: 14 }}>
               <CardFan cards={kept} t={t} />
               {cut && (
@@ -766,6 +848,9 @@ export default function TrainerScreen({ t }) {
               onClick={confirmDiscard}
               t={t}
             />
+          )}
+          {phase === "scoring" && (
+            <ActionButton label="Calculating…" disabled onClick={() => {}} t={t} />
           )}
           {phase === "score" && (
             <ActionButton label="Deal New Hand →" onClick={handleDealNewHand} t={t} />
