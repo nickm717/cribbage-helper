@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
-  RANKS, SUITS, cardValue, scoreHand, scorePairs, scoreRuns, scoreFlush,
+  RANKS, SUITS, cardValue, scoreHand, scoreHandTotal, scorePairs, scoreRuns, scoreFlush,
   scoreNobs, scoreHeels, fullDeck, cardKey, combos, shuffle,
 } from "./engine.js";
 
@@ -222,6 +222,16 @@ describe("deck and combos", () => {
 
   it("combos(6,4) yields the 15 discard keeps", () => {
     expect(combos([1, 2, 3, 4, 5, 6], 4)).toHaveLength(15);
+  });
+
+  it("scoreHandTotal matches scoreHand().total across many deals", () => {
+    // The memoized fast path used in EV loops must equal the full scorer.
+    for (let i = 0; i < 1500; i++) {
+      const c = shuffle(fullDeck()).slice(0, 5);
+      const hand = c.slice(0, 4), cut = c[4];
+      expect(scoreHandTotal(hand, cut, false)).toBe(scoreHand(hand, cut, false).total);
+      expect(scoreHandTotal(hand, cut, true)).toBe(scoreHand(hand, cut, true).total);
+    }
   });
 
   it("shuffle returns a permutation without mutating the input", () => {

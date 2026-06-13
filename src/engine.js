@@ -186,17 +186,49 @@ export function scoreHand(hand4, starter, isCrib = false) {
 // evCrib: deterministic stride-based sampling. For each possible cut we stride
 // through opponent pairs at a fixed interval, giving ~15 samples per cut.
 // With ~46 remaining cards that's 46 × 15 ≈ 690 scoreHand calls per combo.
+// (An exact crib EV — averaging over all C(46,2) opponent pairs per cut — is
+// ~700k score evaluations per six-card analysis and benchmarks at ~17s, so the
+// deterministic sample is the right tradeoff. It is presented as an estimate.)
 //
 // Internal helpers take a pre-computed `rem` array so callers that evaluate
 // multiple combos against the same remaining deck (analyzeHand) only pay the
 // filter cost once instead of once per combo.
+
+// Fifteens, pairs, and runs depend only on ranks, so their combined total is
+// memoized by the sorted rank multiset — a small (≤6188-entry) cache with a
+// very high hit rate across the thousands of cuts evaluated per analysis.
+/** @type {Map<string, number>} */
+const _rankTotalCache = new Map();
+/** @param {Card[]} cards @returns {number} */
+function fifteensPairsRunsTotal(cards) {
+  const key = cards.map(c => rankIdx(c.rank)).sort((a, b) => a - b).join(",");
+  const hit = _rankTotalCache.get(key);
+  if (hit !== undefined) return hit;
+  const v = scoreFifteens(cards).pts + scorePairs(cards).pts + scoreRuns(cards).pts;
+  _rankTotalCache.set(key, v);
+  return v;
+}
+
+/**
+ * Total-only hand score for EV loops (no log allocation). Equivalent to
+ * scoreHand(...).total but faster: the rank-driven scores are memoized and the
+ * suit-driven flush / his-nobs are added directly.
+ * @param {Card[]} hand4 @param {Card} starter @param {boolean} [isCrib=false]
+ * @returns {number}
+ */
+export function scoreHandTotal(hand4, starter, isCrib = false) {
+  const all5 = starter ? [...hand4, starter] : hand4;
+  return fifteensPairsRunsTotal(all5)
+    + scoreFlush(hand4, starter, isCrib).pts
+    + scoreNobs(hand4, starter).pts;
+}
 
 /** @param {Card[]} h4 @param {readonly Card[]} rem @returns {{min:number,max:number,avg:number}} */
 function _scoreAll(h4, rem) {
   if (!rem.length) return { min: 0, max: 0, avg: 0 };
   let min = Infinity, max = -Infinity, sum = 0;
   for (const c of rem) {
-    const s = scoreHand(h4, c, false).total;
+    const s = scoreHandTotal(h4, c, false);
     if (s < min) min = s;
     if (s > max) max = s;
     sum += s;
@@ -218,7 +250,7 @@ function _evCrib(d2, rem) {
       for (let oj = oi + 1; oj < n; oj++) {
         if (oj === ci) continue;
         if (pi % stride === 0) {
-          total += scoreHand([...d2, rem[oi], rem[oj]], rem[ci], true).total;
+          total += scoreHandTotal([...d2, rem[oi], rem[oj]], rem[ci], true);
           count++;
         }
         pi++;
@@ -245,21 +277,29 @@ function _evCrib(d2, rem) {
 /**
  * Evaluate all 15 C(6,4) keeps and return them sorted by combinedEV descending.
  * combinedEV adds (dealer) or subtracts (pone) the crib EV, since the crib
- * belongs to the dealer.
- * @param {Card[]} h6 @param {boolean} isDealer @returns {DiscardOption[]}
+ * belongs to the dealer. `onProgress(done, total)` fires after each keep so a
+ * caller (e.g. a Web Worker) can surface progress.
+ * @param {Card[]} h6 @param {boolean} isDealer
+ * @param {(done: number, total: number) => void} [onProgress]
+ * @returns {DiscardOption[]}
  */
-export function analyzeHand(h6, isDealer) {
+export function analyzeHand(h6, isDealer, onProgress) {
   const exclSet = new Set(h6.map(cardKey));
   // Compute the remaining deck once — shared across all 15 combos
   const rem = FULL_DECK.filter(c => !exclSet.has(cardKey(c)));
 
-  const options = combos(h6, 4).map(keep => {
+  const keeps = combos(h6, 4);
+  /** @type {DiscardOption[]} */
+  const options = [];
+  for (let i = 0; i < keeps.length; i++) {
+    const keep = keeps[i];
     const discard = h6.filter(c => !keep.some(k => cardKey(k) === cardKey(c)));
     const { min: handMin, max: handMax, avg: handAvg } = _scoreAll(keep, rem);
     const cribAvg = _evCrib(discard, rem);
     const combinedEV = handAvg + (isDealer ? 0.5 : -0.5) * cribAvg;
-    return { keep, discard, handMin, handMax, handAvg, cribAvg, combinedEV, rank: 0 };
-  });
+    options.push({ keep, discard, handMin, handMax, handAvg, cribAvg, combinedEV, rank: 0 });
+    onProgress?.(i + 1, keeps.length);
+  }
 
   options.sort((a, b) => b.combinedEV - a.combinedEV);
 
