@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   RANKS, SUITS, cardValue, scoreHand, scorePairs, scoreRuns, scoreFlush,
-  scoreNobs, scoreHeels, fullDeck, cardKey, combos,
+  scoreNobs, scoreHeels, fullDeck, cardKey, combos, shuffle,
 } from "./engine.js";
 
 // Terse card constructor for readable canonical hands.
@@ -222,5 +222,13 @@ describe("deck and combos", () => {
 
   it("combos(6,4) yields the 15 discard keeps", () => {
     expect(combos([1, 2, 3, 4, 5, 6], 4)).toHaveLength(15);
+  });
+
+  it("shuffle returns a permutation without mutating the input", () => {
+    const deck = fullDeck();
+    const s = shuffle(deck);
+    expect(s).toHaveLength(52);
+    expect(new Set(s.map(cardKey))).toEqual(new Set(deck.map(cardKey)));
+    expect(deck.map(cardKey)).toEqual(fullDeck().map(cardKey)); // input untouched
   });
 });

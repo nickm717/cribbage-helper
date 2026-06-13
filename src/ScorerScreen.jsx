@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { isRed, cardKey, scoreHand, RANKS, SUITS } from "./engine.js";
+import { isRed, cardKey, scoreHand, shuffle, RANKS, SUITS } from "./engine.js";
 import { cardLabel } from "./format.js";
 
 // ─── Scorer building blocks ──────────────────────────────────────────────────
@@ -236,7 +236,7 @@ export default function ScorerScreen({ t }) {
   }
   function randomize() {
     const deck = SUITS.flatMap(suit => RANKS.map(rank => ({ rank, suit })));
-    setSlots([...deck].sort(() => Math.random() - 0.5).slice(0, 5));
+    setSlots(shuffle(deck).slice(0, 5));
     setActiveSlot(null); setSelectedRank(null);
   }
   function clear() { setSlots(Array(5).fill(null)); setActiveSlot(0); setSelectedRank(null); }

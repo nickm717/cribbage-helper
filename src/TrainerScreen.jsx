@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { rankIdx, isRed, cardKey, fullDeck, scoreHand, analyzeHand } from "./engine.js";
+import { rankIdx, isRed, cardKey, fullDeck, scoreHand, analyzeHand, shuffle } from "./engine.js";
 import { efficiencyPct, tierColor, cardLabel } from "./format.js";
 
 // ─── History persistence ─────────────────────────────────────────────────────
@@ -601,7 +601,7 @@ export default function TrainerScreen({ t }) {
   const [allOptions, setAllOptions] = useState([]);
 
   function dealNewHand() {
-    const deck = [...fullDeck()].sort(() => Math.random() - 0.5);
+    const deck = shuffle(fullDeck());
     const newHand6 = deck.slice(0, 6).sort((a, b) => rankIdx(a.rank) - rankIdx(b.rank));
     setHand6(newHand6);
     setIsDealer(Math.random() > 0.5);
@@ -654,7 +654,7 @@ export default function TrainerScreen({ t }) {
     let cResult = null;
     if (isDealer) {
       const rem2 = remaining.filter(c => cardKey(c) !== cardKey(cutCard));
-      const oDiscard = [...rem2].sort(() => Math.random() - 0.5).slice(0, 2);
+      const oDiscard = shuffle(rem2).slice(0, 2);
       cResult = scoreHand([...discardedCards, ...oDiscard], cutCard, true);
     }
 

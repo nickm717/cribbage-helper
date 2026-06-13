@@ -43,6 +43,21 @@ const FULL_DECK = SUITS.flatMap(s => RANKS.map(r => ({ rank: r, suit: s })));
 export function fullDeck() { return FULL_DECK; }
 
 /**
+ * Return a new array that is a uniformly-random permutation of `arr`
+ * (Fisher–Yates). `sort(() => Math.random() - 0.5)` is biased and relies on
+ * comparator consistency the spec doesn't guarantee, so it isn't used here.
+ * @template T @param {readonly T[]} arr @returns {T[]}
+ */
+export function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/**
  * All size-`size` combinations of `arr`, order-independent.
  * @template T @param {T[]} arr @param {number} size @returns {T[][]}
  */
