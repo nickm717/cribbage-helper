@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { rankIdx, isRed, cardKey, fullDeck, scoreHand, analyzeHand } from "./engine.js";
+import { rankIdx, isRed, cardKey, fullDeck, scoreHand, analyzeHand, shuffle } from "./engine.js";
+import { efficiencyPct, tierColor, cardLabel } from "./format.js";
 
 // ─── History persistence ─────────────────────────────────────────────────────
 
@@ -19,7 +20,7 @@ function saveHandToHistory(grade, yourEV, optEV) {
     last.hands += 1;
     last.yourEV = (last.yourEV || 0) + yourEV;
     last.optEV  = (last.optEV  || 0) + optEV;
-    last.efficiency = last.optEV > 0 ? Math.min(100, Math.round(last.yourEV / last.optEV * 100)) : 100;
+    last.efficiency = efficiencyPct(last.yourEV, last.optEV);
     last.grades[grade] = (last.grades[grade] || 0) + 1;
   } else {
     const entry = {
@@ -28,7 +29,7 @@ function saveHandToHistory(grade, yourEV, optEV) {
       hands: 1,
       yourEV,
       optEV,
-      efficiency: optEV > 0 ? Math.min(100, Math.round(yourEV / optEV * 100)) : 100,
+      efficiency: efficiencyPct(yourEV, optEV),
       grades: { Optimal: 0, Close: 0, Suboptimal: 0, [grade]: 1 },
     };
     if (sessions.length >= 100) sessions.shift();
@@ -111,15 +112,24 @@ function CardFan({ cards, selected = [], onSelect, dimOthers = false, t }) {
       {cards.map((card, i) => {
         const isSel = selected.includes(i);
         const isDim = dimOthers && !isSel;
+        const interactive = !!onSelect;
         return (
           <div
             key={cardKey(card)}
-            onClick={() => onSelect?.(i)}
+            onClick={interactive ? () => onSelect(i) : undefined}
+            onKeyDown={interactive ? (e => {
+              if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(i); }
+            }) : undefined}
+            role={interactive ? "button" : undefined}
+            tabIndex={interactive ? 0 : undefined}
+            aria-pressed={interactive ? isSel : undefined}
+            aria-label={interactive ? `${cardLabel(card)}${isSel ? ", selected to discard" : ""}` : cardLabel(card)}
             style={{
               marginLeft: i === 0 ? 0 : -OVERLAP,
               transform: isSel ? `translateY(-${LIFT}px)` : "translateY(0)",
               transition: "transform 200ms cubic-bezier(0.22, 0.8, 0.36, 1)",
-              cursor: onSelect ? "pointer" : "default",
+              cursor: interactive ? "pointer" : "default",
+              borderRadius: 8,
               WebkitTapHighlightColor: "transparent",
             }}
           >
@@ -183,11 +193,7 @@ function StatChip({ label, value, t }) {
 // label + metadata to the big number's baseline so the whole row is one line tall.
 function SessionStatStrip({ hands, yourEV, optEV, efficiency, t }) {
   const hasData = hands > 0;
-  const tier = !hasData ? null
-    : efficiency >= 90 ? t.scoreAccents[3]  // green
-    : efficiency >= 75 ? t.scoreAccents[2]  // orange
-    : efficiency >= 60 ? t.scoreAccents[1]  // red
-    : t.scoreAccents[0];                    // purple
+  const tier = hasData ? tierColor(efficiency, t) : null;
   return (
     <div style={{
       display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -243,8 +249,8 @@ function ActionButton({ label, onClick, disabled, t }) {
 function SectionBlock({ title, children, t, accent }) {
   return (
     <div style={{
-      background: t.surfaceBg, borderRadius: 10, padding: "12px 14px",
-      border: `1px solid ${accent || t.border}`,
+      background: t.feltBase, borderRadius: 10, padding: "12px 14px",
+      border: `1px solid ${accent || t.feltRule}`,
     }}>
       {title && <div style={{ fontSize: 9, color: t.textMuted, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>{title}</div>}
       {children}
@@ -391,7 +397,7 @@ function DiscardOptionRow({ option, isPlayerDiscard, isOptimal, t }) {
           { label: "CRIB", value: option.cribAvg.toFixed(1) },
           { label: "NET", value: option.combinedEV.toFixed(1) },
         ].map(({ label, value }) => (
-          <div key={label} style={{ background: t.surfaceSunken, borderRadius: 6, padding: "5px 6px", textAlign: "center" }}>
+          <div key={label} style={{ background: t.feltDeep, borderRadius: 6, padding: "5px 6px", textAlign: "center" }}>
             <div style={{ fontSize: 8, color: t.textMuted, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 2 }}>{label}</div>
             <div style={{ fontSize: 12, fontWeight: 600, color: label === "NET" ? t.goldBright : t.textPrimary, fontFamily: t.fontMono, letterSpacing: "-0.01em" }}>{value}</div>
           </div>
@@ -459,7 +465,7 @@ function DiscardOptionsTable({ allOptions, discarded, optKeep, t }) {
 }
 
 function ScoreBody({ feedback, kept, discarded, cut, handResult, cribResult, optHandResult, optResult, allOptions, isDealer, session, t }) {
-  const gradeColor = !feedback ? t.accentYellow
+  const gradeColor = !feedback ? t.goldBright
     : feedback.grade === "Optimal" ? t.scorePositive
     : feedback.grade === "Close" ? t.goldBright : t.scoreMiss;
 
@@ -471,7 +477,7 @@ function ScoreBody({ feedback, kept, discarded, cut, handResult, cribResult, opt
   const hands = session.hands + 1;
   const totalYourEV = session.yourEV + (feedback?.playerEV ?? 0);
   const totalOptEV  = session.optEV  + (feedback?.optEV    ?? 0);
-  const eff = totalOptEV > 0 ? Math.min(100, Math.round(totalYourEV / totalOptEV * 100)) : 100;
+  const eff = efficiencyPct(totalYourEV, totalOptEV);
   const effColor = eff >= 90 ? t.scorePositive : eff >= 75 ? t.goldBright : t.scoreMiss;
 
   return (
@@ -595,7 +601,7 @@ export default function TrainerScreen({ t }) {
   const [allOptions, setAllOptions] = useState([]);
 
   function dealNewHand() {
-    const deck = [...fullDeck()].sort(() => Math.random() - 0.5);
+    const deck = shuffle(fullDeck());
     const newHand6 = deck.slice(0, 6).sort((a, b) => rankIdx(a.rank) - rankIdx(b.rank));
     setHand6(newHand6);
     setIsDealer(Math.random() > 0.5);
@@ -648,7 +654,7 @@ export default function TrainerScreen({ t }) {
     let cResult = null;
     if (isDealer) {
       const rem2 = remaining.filter(c => cardKey(c) !== cardKey(cutCard));
-      const oDiscard = [...rem2].sort(() => Math.random() - 0.5).slice(0, 2);
+      const oDiscard = shuffle(rem2).slice(0, 2);
       cResult = scoreHand([...discardedCards, ...oDiscard], cutCard, true);
     }
 
@@ -684,17 +690,16 @@ export default function TrainerScreen({ t }) {
     dealNewHand();
   }
 
-  const sessionEfficiency = session.optEV > 0
-    ? Math.min(100, Math.round(session.yourEV / session.optEV * 100)) : 100;
+  const sessionEfficiency = efficiencyPct(session.yourEV, session.optEV);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: t.surfaceBg }}>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: t.feltBase }}>
 
       {/* ── Top bar: efficiency-forward session header ──────────────────── */}
       <div style={{
         flexShrink: 0,
         padding: "8px 16px",
-        background: t.surfaceBg, borderBottom: `1px solid ${t.border}`,
+        background: t.feltBase, borderBottom: `1px solid ${t.feltRule}`,
       }}>
         <SessionStatStrip
           hands={session.hands}
@@ -723,7 +728,7 @@ export default function TrainerScreen({ t }) {
       </div>
 
       {/* ── Bottom dock — sticky ─────────────────────────────────────────── */}
-      <div style={{ flexShrink: 0, background: t.surfaceBg, borderTop: `1px solid ${t.border}` }}>
+      <div style={{ flexShrink: 0, background: t.feltBase, borderTop: `1px solid ${t.feltRule}` }}>
 
         {/* Card shelf */}
         <div style={{

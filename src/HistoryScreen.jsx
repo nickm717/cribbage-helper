@@ -1,13 +1,7 @@
 import { useHistory } from "./useHistory.js";
+import { efficiencyPct, tierColor } from "./format.js";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function tierColor(efficiency, t) {
-  if (efficiency >= 90) return t.scoreAccents[3];
-  if (efficiency >= 75) return t.scoreAccents[2];
-  if (efficiency >= 60) return t.scoreAccents[1];
-  return t.scoreAccents[0];
-}
 
 function fmtDate(isoDate) {
   const [y, m, d] = isoDate.split("-");
@@ -129,7 +123,7 @@ function SessionRow({ session, t }) {
       padding: "10px 14px",
       background: t.feltMid,
       borderRadius: 8,
-      border: `1px solid ${t.border}`,
+      border: `1px solid ${t.feltRule}`,
     }}>
       <div style={{ minWidth: 0 }}>
         <div style={{
@@ -163,7 +157,7 @@ export default function HistoryScreen({ t }) {
       <div style={{
         flex: 1, display: "flex", flexDirection: "column",
         alignItems: "center", justifyContent: "center",
-        padding: 32, gap: 10, background: t.surfaceBg,
+        padding: 32, gap: 10, background: t.feltBase,
       }}>
         <div style={{ fontSize: 40 }}>📈</div>
         <div style={{
@@ -189,8 +183,8 @@ export default function HistoryScreen({ t }) {
   const totalYourEV = sessions.reduce((s, x) => s + (x.yourEV ?? 0), 0);
   const totalOptEV  = sessions.reduce((s, x) => s + (x.optEV  ?? 0), 0);
   const lifetimeEff = totalOptEV > 0
-    ? Math.min(100, Math.round(totalYourEV / totalOptEV * 100))
-    : (totalOpt > 0 ? Math.min(100, Math.round(totalYour / totalOpt * 100)) : 100);
+    ? efficiencyPct(totalYourEV, totalOptEV)
+    : (totalOpt > 0 ? efficiencyPct(totalYour, totalOpt) : 100);
   const bestEff     = Math.min(100, Math.max(...sessions.map(s => s.efficiency)));
 
   const sevenDaysAgo = new Date();
@@ -202,8 +196,8 @@ export default function HistoryScreen({ t }) {
   const recentYourEV = recentSessions.reduce((s, x) => s + (x.yourEV ?? 0), 0);
   const recentOptEV  = recentSessions.reduce((s, x) => s + (x.optEV  ?? 0), 0);
   const sevenDayEff = recentOptEV > 0
-    ? Math.min(100, Math.round(recentYourEV / recentOptEV * 100))
-    : (recentOpt > 0 ? Math.min(100, Math.round(recentYour / recentOpt * 100)) : null);
+    ? efficiencyPct(recentYourEV, recentOptEV)
+    : (recentOpt > 0 ? efficiencyPct(recentYour, recentOpt) : null);
 
   // Daily aggregation for sparkline (last 14 days)
   const fourteenDaysAgo = new Date();
@@ -224,8 +218,8 @@ export default function HistoryScreen({ t }) {
     .map(([date, d]) => ({
       date,
       efficiency: d.optEV > 0
-        ? Math.min(100, Math.round(d.yourEV / d.optEV * 100))
-        : (d.optPts > 0 ? Math.min(100, Math.round(d.yourPts / d.optPts * 100)) : 100),
+        ? efficiencyPct(d.yourEV, d.optEV)
+        : (d.optPts > 0 ? efficiencyPct(d.yourPts, d.optPts) : 100),
     }));
 
   const recentDisplaySessions = [...sessions].reverse().slice(0, 20);
@@ -239,7 +233,7 @@ export default function HistoryScreen({ t }) {
 
   return (
     <div style={{
-      flex: 1, overflowY: "auto", background: t.surfaceBg,
+      flex: 1, overflowY: "auto", background: t.feltBase,
     }}>
       <div style={{
         display: "flex", flexDirection: "column", gap: 20,
@@ -251,7 +245,7 @@ export default function HistoryScreen({ t }) {
           display: "flex", gap: 0,
           background: t.feltMid,
           borderRadius: 10,
-          border: `1px solid ${t.border}`,
+          border: `1px solid ${t.feltRule}`,
           overflow: "hidden",
         }}>
           {[
@@ -261,7 +255,7 @@ export default function HistoryScreen({ t }) {
           ].map((stat, i, arr) => (
             <div key={stat.label} style={{
               flex: 1, padding: "12px 8px",
-              borderRight: i < arr.length - 1 ? `1px solid ${t.border}` : "none",
+              borderRight: i < arr.length - 1 ? `1px solid ${t.feltRule}` : "none",
             }}>
               <HeadlineStat label={stat.label} value={stat.value} color={stat.color} t={t} />
             </div>
@@ -275,7 +269,7 @@ export default function HistoryScreen({ t }) {
             <div style={{
               background: t.feltMid,
               borderRadius: 10,
-              border: `1px solid ${t.border}`,
+              border: `1px solid ${t.feltRule}`,
               padding: "16px 16px 22px",
             }}>
               <Sparkline data={dailyData} t={t} />
