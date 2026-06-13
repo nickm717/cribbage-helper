@@ -3,10 +3,10 @@ import { useHistory } from "./useHistory.js";
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function tierColor(efficiency, t) {
-  if (efficiency >= 90) return t.scoreAccents[3];
-  if (efficiency >= 75) return t.scoreAccents[2];
-  if (efficiency >= 60) return t.scoreAccents[1];
-  return t.scoreAccents[0];
+  if (efficiency >= 90) return t.tierGrade[3];
+  if (efficiency >= 75) return t.tierGrade[2];
+  if (efficiency >= 60) return t.tierGrade[1];
+  return t.tierGrade[0];
 }
 
 function fmtDate(isoDate) {
@@ -129,7 +129,7 @@ function SessionRow({ session, t }) {
       padding: "10px 14px",
       background: t.feltMid,
       borderRadius: 8,
-      border: `1px solid ${t.border}`,
+      border: `1px solid ${t.feltRule}`,
     }}>
       <div style={{ minWidth: 0 }}>
         <div style={{
@@ -163,7 +163,7 @@ export default function HistoryScreen({ t }) {
       <div style={{
         flex: 1, display: "flex", flexDirection: "column",
         alignItems: "center", justifyContent: "center",
-        padding: 32, gap: 10, background: t.surfaceBg,
+        padding: 32, gap: 10, background: t.feltBase,
       }}>
         <div style={{ fontSize: 40 }}>📈</div>
         <div style={{
@@ -239,7 +239,7 @@ export default function HistoryScreen({ t }) {
 
   return (
     <div style={{
-      flex: 1, overflowY: "auto", background: t.surfaceBg,
+      flex: 1, overflowY: "auto", background: t.feltBase,
     }}>
       <div style={{
         display: "flex", flexDirection: "column", gap: 20,
@@ -251,7 +251,7 @@ export default function HistoryScreen({ t }) {
           display: "flex", gap: 0,
           background: t.feltMid,
           borderRadius: 10,
-          border: `1px solid ${t.border}`,
+          border: `1px solid ${t.feltRule}`,
           overflow: "hidden",
         }}>
           {[
@@ -261,7 +261,7 @@ export default function HistoryScreen({ t }) {
           ].map((stat, i, arr) => (
             <div key={stat.label} style={{
               flex: 1, padding: "12px 8px",
-              borderRight: i < arr.length - 1 ? `1px solid ${t.border}` : "none",
+              borderRight: i < arr.length - 1 ? `1px solid ${t.feltRule}` : "none",
             }}>
               <HeadlineStat label={stat.label} value={stat.value} color={stat.color} t={t} />
             </div>
@@ -275,7 +275,7 @@ export default function HistoryScreen({ t }) {
             <div style={{
               background: t.feltMid,
               borderRadius: 10,
-              border: `1px solid ${t.border}`,
+              border: `1px solid ${t.feltRule}`,
               padding: "16px 16px 22px",
             }}>
               <Sparkline data={dailyData} t={t} />

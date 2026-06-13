@@ -184,10 +184,10 @@ function StatChip({ label, value, t }) {
 function SessionStatStrip({ hands, yourEV, optEV, efficiency, t }) {
   const hasData = hands > 0;
   const tier = !hasData ? null
-    : efficiency >= 90 ? t.scoreAccents[3]  // green
-    : efficiency >= 75 ? t.scoreAccents[2]  // orange
-    : efficiency >= 60 ? t.scoreAccents[1]  // red
-    : t.scoreAccents[0];                    // purple
+    : efficiency >= 90 ? t.tierGrade[3]  // green
+    : efficiency >= 75 ? t.tierGrade[2]  // orange
+    : efficiency >= 60 ? t.tierGrade[1]  // red
+    : t.tierGrade[0];                    // purple
   return (
     <div style={{
       display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -243,8 +243,8 @@ function ActionButton({ label, onClick, disabled, t }) {
 function SectionBlock({ title, children, t, accent }) {
   return (
     <div style={{
-      background: t.surfaceBg, borderRadius: 10, padding: "12px 14px",
-      border: `1px solid ${accent || t.border}`,
+      background: t.feltBase, borderRadius: 10, padding: "12px 14px",
+      border: `1px solid ${accent || t.feltRule}`,
     }}>
       {title && <div style={{ fontSize: 9, color: t.textMuted, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>{title}</div>}
       {children}
@@ -391,7 +391,7 @@ function DiscardOptionRow({ option, isPlayerDiscard, isOptimal, t }) {
           { label: "CRIB", value: option.cribAvg.toFixed(1) },
           { label: "NET", value: option.combinedEV.toFixed(1) },
         ].map(({ label, value }) => (
-          <div key={label} style={{ background: t.surfaceSunken, borderRadius: 6, padding: "5px 6px", textAlign: "center" }}>
+          <div key={label} style={{ background: t.feltDeep, borderRadius: 6, padding: "5px 6px", textAlign: "center" }}>
             <div style={{ fontSize: 8, color: t.textMuted, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 2 }}>{label}</div>
             <div style={{ fontSize: 12, fontWeight: 600, color: label === "NET" ? t.goldBright : t.textPrimary, fontFamily: t.fontMono, letterSpacing: "-0.01em" }}>{value}</div>
           </div>
@@ -459,7 +459,7 @@ function DiscardOptionsTable({ allOptions, discarded, optKeep, t }) {
 }
 
 function ScoreBody({ feedback, kept, discarded, cut, handResult, cribResult, optHandResult, optResult, allOptions, isDealer, session, t }) {
-  const gradeColor = !feedback ? t.accentYellow
+  const gradeColor = !feedback ? t.goldBright
     : feedback.grade === "Optimal" ? t.scorePositive
     : feedback.grade === "Close" ? t.goldBright : t.scoreMiss;
 
@@ -688,13 +688,13 @@ export default function TrainerScreen({ t }) {
     ? Math.min(100, Math.round(session.yourEV / session.optEV * 100)) : 100;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: t.surfaceBg }}>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: t.feltBase }}>
 
       {/* ── Top bar: efficiency-forward session header ──────────────────── */}
       <div style={{
         flexShrink: 0,
         padding: "8px 16px",
-        background: t.surfaceBg, borderBottom: `1px solid ${t.border}`,
+        background: t.feltBase, borderBottom: `1px solid ${t.feltRule}`,
       }}>
         <SessionStatStrip
           hands={session.hands}
@@ -723,7 +723,7 @@ export default function TrainerScreen({ t }) {
       </div>
 
       {/* ── Bottom dock — sticky ─────────────────────────────────────────── */}
-      <div style={{ flexShrink: 0, background: t.surfaceBg, borderTop: `1px solid ${t.border}` }}>
+      <div style={{ flexShrink: 0, background: t.feltBase, borderTop: `1px solid ${t.feltRule}` }}>
 
         {/* Card shelf */}
         <div style={{
