@@ -1,8 +1,13 @@
 import { useHistory } from "./useHistory.js";
 import { efficiencyPct, tierColor } from "./format.js";
 
+/** @typedef {import("./theme.js").Theme} Theme */
+/** @typedef {import("./useHistory.js").Session} Session */
+/** @typedef {{ date: string, efficiency: number }} DailyPoint */
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+/** @param {string} isoDate */
 function fmtDate(isoDate) {
   const [y, m, d] = isoDate.split("-");
   const dt = new Date(Number(y), Number(m) - 1, Number(d));
@@ -11,6 +16,7 @@ function fmtDate(isoDate) {
 
 // ─── Sparkline ───────────────────────────────────────────────────────────────
 
+/** @param {{ data: DailyPoint[], t: Theme }} props */
 function Sparkline({ data, t }) {
   if (data.length < 2) return null;
 
@@ -20,7 +26,9 @@ function Sparkline({ data, t }) {
   const maxY = Math.min(100, Math.max(...effVals) + 8);
   const range = maxY - minY || 1;
 
+  /** @param {number} i */
   const xOf = i => (i / (data.length - 1)) * W;
+  /** @param {number} eff */
   const yOf = eff => H - ((eff - minY) / range) * H;
 
   const pts = data.map((d, i) => `${xOf(i)},${yOf(d.efficiency)}`).join(" ");
@@ -91,6 +99,7 @@ function Sparkline({ data, t }) {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
+/** @param {{ label: string, value: string, color?: string, t: Theme }} props */
 function HeadlineStat({ label, value, color, t }) {
   return (
     <div style={{ textAlign: "center", flex: 1 }}>
@@ -112,6 +121,7 @@ function HeadlineStat({ label, value, color, t }) {
   );
 }
 
+/** @param {{ session: Session, t: Theme }} props */
 function SessionRow({ session, t }) {
   const { date, hands, efficiency, grades } = session;
   const color = tierColor(efficiency, t);
@@ -149,6 +159,7 @@ function SessionRow({ session, t }) {
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
+/** @param {{ t: Theme }} props */
 export default function HistoryScreen({ t }) {
   const sessions = useHistory();
 
@@ -207,12 +218,12 @@ export default function HistoryScreen({ t }) {
     .filter(s => s.date >= fourteenKey)
     .reduce((acc, s) => {
       if (!acc[s.date]) acc[s.date] = { yourPts: 0, optPts: 0, yourEV: 0, optEV: 0 };
-      acc[s.date].yourPts += s.yourPts;
-      acc[s.date].optPts  += s.optPts;
+      acc[s.date].yourPts += (s.yourPts ?? 0);
+      acc[s.date].optPts  += (s.optPts  ?? 0);
       acc[s.date].yourEV  += (s.yourEV ?? 0);
       acc[s.date].optEV   += (s.optEV  ?? 0);
       return acc;
-    }, {});
+    }, /** @type {Record<string, { yourPts: number, optPts: number, yourEV: number, optEV: number }>} */ ({}));
   const dailyData = Object.entries(byDate)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([date, d]) => ({

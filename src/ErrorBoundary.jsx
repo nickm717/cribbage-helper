@@ -6,12 +6,17 @@ import { Component } from "react";
  * theme-agnostic (the theme may be the thing that failed), kept on the felt
  * palette so it doesn't look alien.
  */
+/**
+ * @extends {Component<{ children: import("react").ReactNode }, { error: Error | null }>}
+ */
 export default class ErrorBoundary extends Component {
+  /** @param {{ children: import("react").ReactNode }} props */
   constructor(props) {
     super(props);
     this.state = { error: null };
   }
 
+  /** @param {Error} error */
   static getDerivedStateFromError(error) {
     return { error };
   }

@@ -6,10 +6,11 @@ import { scoreFifteens, scorePairs, scoreRuns } from "./engine.js";
  * A short plain-language reason a 4-card keep is strong, so the discard grade
  * teaches *why*, not just by how much EV. Inspects the kept cards' own
  * structure (no cut). Returns "" when nothing notable stands out.
- * @param {{ rank: string, suit: string }[]} keep @returns {string}
+ * @param {import("./engine.js").Card[]} keep @returns {string}
  */
 export function describeKeep(keep) {
   if (!keep || keep.length !== 4) return "";
+  /** @type {string[]} */
   const features = [];
 
   const pairPts = scorePairs(keep).pts;
@@ -41,7 +42,7 @@ const SUIT_NAMES = { "♠": "spades", "♥": "hearts", "♦": "diamonds", "♣":
 
 /**
  * Spoken label for a card, e.g. "Five of hearts" — for aria-label / SR text.
- * @param {{ rank: string, suit: string }} card @returns {string}
+ * @param {import("./engine.js").Card | null} card @returns {string}
  */
 export function cardLabel(card) {
   if (!card) return "empty card slot";

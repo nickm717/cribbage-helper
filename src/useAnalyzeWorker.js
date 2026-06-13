@@ -15,11 +15,12 @@ import { analyzeHand } from "./engine.js";
  * }}
  */
 export function useAnalyzeWorker() {
-  const workerRef = useRef(null);
+  const workerRef = useRef(/** @type {Worker | null} */ (null));
   const reqIdRef = useRef(0);
-  const handlersRef = useRef(new Map());
+  const handlersRef = useRef(/** @type {Map<number, { resolve: (v: any[]) => void, reject: (e: Error) => void, onProgress?: (done: number, total: number) => void }>} */ (new Map()));
 
   useEffect(() => {
+    /** @type {Worker | undefined} */
     let worker;
     try {
       worker = new Worker(new URL("./analyzeHand.worker.js", import.meta.url), { type: "module" });
@@ -43,7 +44,7 @@ export function useAnalyzeWorker() {
     };
   }, []);
 
-  const analyze = useCallback((hand6, isDealer, onProgress) => {
+  const analyze = useCallback((/** @type {any[]} */ hand6, /** @type {boolean} */ isDealer, /** @type {((done: number, total: number) => void)=} */ onProgress) => {
     const worker = workerRef.current;
     if (!worker) {
       // Synchronous fallback — still off the synchronous critical path via a

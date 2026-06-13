@@ -18,8 +18,29 @@ const FONT_SIZE = { display: 56, title: 28, heading: 21, body: 15, bodySm: 13, l
 const SCALE = { space: SPACE, radius: RADIUS, fontSize: FONT_SIZE };
 
 /**
+ * The resolved Card Room theme: color tokens, type stacks, and scale tokens.
+ * Every value is a CSS string except where noted.
+ * @typedef {Object} Theme
+ * @property {boolean} dark
+ * @property {string} feltDeep @property {string} feltBase @property {string} feltMid
+ * @property {string} feltLift @property {string} feltRule
+ * @property {string} cardFace @property {string} cardWarm
+ * @property {string} goldBright @property {string} goldMuted @property {string} goldDim @property {string} goldGlow
+ * @property {string} scorePositive @property {string} scoreMiss
+ * @property {string} suitRed @property {string} suitDark
+ * @property {string} textPrimary @property {string} textSecondary @property {string} textMuted @property {string} textDisabled
+ * @property {string} textOnCard @property {string} textOnGold
+ * @property {string[]} tierGrade
+ * @property {string} fontUi @property {string} fontCard @property {string} fontMono
+ * @property {Record<number, number>} space
+ * @property {{ sm: number, card: number, md: number, lg: number, pill: number }} radius
+ * @property {Record<string, number>} fontSize
+ * @property {string} redSuitBg @property {string} blueSuitBg @property {string} redSuitHover @property {string} blueSuitHover
+ */
+
+/**
  * Build the Card Room theme for the given mode.
- * @param {boolean} dark @returns {Record<string, any>}
+ * @param {boolean} dark @returns {Theme}
  */
 export function makeTheme(dark) {
   if (dark) {
@@ -117,7 +138,7 @@ export function makeTheme(dark) {
 /**
  * Theme hook. Honors prefers-color-scheme, supports a manual override that
  * persists across reloads, and returns [theme, toggle, isDark].
- * @returns {[Record<string, any>, () => void, boolean]}
+ * @returns {[Theme, () => void, boolean]}
  */
 export function useTheme() {
   const sysMq = typeof window !== "undefined"
@@ -135,6 +156,7 @@ export function useTheme() {
 
   useEffect(() => {
     const m = window.matchMedia("(prefers-color-scheme: dark)");
+    /** @param {MediaQueryListEvent} e */
     const h = e => setSysDark(e.matches);
     m.addEventListener("change", h);
     return () => m.removeEventListener("change", h);

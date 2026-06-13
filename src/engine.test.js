@@ -6,6 +6,7 @@ import {
 import { describeKeep } from "./format.js";
 
 // Terse card constructor for readable canonical hands.
+/** @param {import("./engine.js").Rank} rank @param {import("./engine.js").Suit} suit */
 const C = (rank, suit) => ({ rank, suit });
 
 describe("cardValue", () => {
@@ -172,7 +173,7 @@ describe("impossibility guards", () => {
     // rank-driven scores (fifteens, pairs, runs) across every 4-rank hand +
     // every cut rank. 13^4 * 13 patterns, deduped by value.
     const seen = new Set();
-    const suits = ["♠", "♥", "♦", "♣"];
+    const suits = SUITS;
     for (let a = 0; a < 13; a++)
     for (let b = a; b < 13; b++)
     for (let c = b; c < 13; c++)

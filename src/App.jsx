@@ -23,6 +23,11 @@ const NAV_ITEMS = [
   { id: "settings", label: "Settings", subtitle: "Rules variants & preferences",    icon: "⚙️" },
 ];
 
+/**
+ * @param {{ view: string, dropdownOpen: boolean, onToggleDropdown: () => void,
+ *   onThemeToggle: () => void, isDesktop: boolean, isDark: boolean,
+ *   t: import("./theme.js").Theme }} props
+ */
 function TopBar({ view, dropdownOpen, onToggleDropdown, onThemeToggle, isDesktop, isDark, t }) {
   const current = NAV_ITEMS.find(n => n.id === view);
   return (
@@ -80,6 +85,9 @@ function TopBar({ view, dropdownOpen, onToggleDropdown, onThemeToggle, isDesktop
   );
 }
 
+/**
+ * @param {{ view: string, onNavigate: (id: string) => void, t: import("./theme.js").Theme }} props
+ */
 function SectionDropdown({ view, onNavigate, t }) {
   return (
     <div style={{ background: t.feltBase }}>
@@ -123,6 +131,7 @@ function SectionDropdown({ view, onNavigate, t }) {
 }
 
 
+/** @param {{ t: import("./theme.js").Theme }} props */
 function SettingsScreen({ t }) {
   return (
     <div style={{

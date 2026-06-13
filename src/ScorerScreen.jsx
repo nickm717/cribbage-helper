@@ -2,8 +2,17 @@ import { useState } from "react";
 import { isRed, cardKey, scoreHand, shuffle, RANKS, SUITS } from "./engine.js";
 import { cardLabel } from "./format.js";
 
+/** @typedef {import("./theme.js").Theme} Theme */
+/** @typedef {import("./engine.js").Card} Card */
+/** @typedef {import("./engine.js").Rank} Rank */
+/** @typedef {import("./engine.js").Suit} Suit */
+
 // ─── Scorer building blocks ──────────────────────────────────────────────────
 
+/**
+ * @param {{ card: Card | null, active: boolean, onClick: () => void,
+ *   onRemove: () => void, t: Theme }} props
+ */
 function CardPill({ card, active, onClick, onRemove, t }) {
   const red = card && isRed(card.suit);
   const filled = !!card;
@@ -57,6 +66,10 @@ function CardPill({ card, active, onClick, onRemove, t }) {
   );
 }
 
+/**
+ * @param {{ selectedRank: Rank | null, usedKeys: Set<string>,
+ *   onRankSelect: (rank: Rank | null) => void, t: Theme }} props
+ */
 function RankStrip({ selectedRank, usedKeys, onRankSelect, t }) {
   return (
     <div style={{
@@ -94,6 +107,10 @@ function RankStrip({ selectedRank, usedKeys, onRankSelect, t }) {
   );
 }
 
+/**
+ * @param {{ selectedRank: Rank | null, usedKeys: Set<string>,
+ *   onPickSuit: (suit: Suit) => void, t: Theme }} props
+ */
 function SuitRow({ selectedRank, usedKeys, onPickSuit, t }) {
   return (
     <div style={{ padding: "0 16px" }}>
@@ -140,6 +157,7 @@ function SuitRow({ selectedRank, usedKeys, onPickSuit, t }) {
   );
 }
 
+/** @param {{ result: import("./engine.js").HandScore, t: Theme }} props */
 function ScorePanel({ result, t }) {
   const { total, log } = result;
   // High scores get celebrated; low scores stay neutral (red would imply
@@ -208,19 +226,23 @@ function ScorePanel({ result, t }) {
 
 // ─── Scorer screen ───────────────────────────────────────────────────────────
 
+/** @param {{ t: Theme }} props */
 export default function ScorerScreen({ t }) {
-  const [slots, setSlots] = useState(Array(5).fill(null));
-  const [activeSlot, setActiveSlot] = useState(0);
-  const [selectedRank, setSelectedRank] = useState(null);
+  const [slots, setSlots] = useState(/** @type {(Card | null)[]} */ (Array(5).fill(null)));
+  const [activeSlot, setActiveSlot] = useState(/** @type {number | null} */ (0));
+  const [selectedRank, setSelectedRank] = useState(/** @type {Rank | null} */ (null));
   const [mode, setMode] = useState("hand");
 
-  const usedKeys = new Set(slots.filter(Boolean).map(cardKey));
-  const hand4 = slots.slice(1).filter(Boolean);
+  const usedKeys = new Set(/** @type {Card[]} */ (slots.filter(Boolean)).map(cardKey));
+  const hand4 = /** @type {Card[]} */ (slots.slice(1).filter(Boolean));
   const result = hand4.length === 4 ? scoreHand(hand4, slots[0], mode === "crib") : null;
   const canPick = activeSlot !== null;
 
+  /** @param {number} i */
   function pickSlot(i) { setActiveSlot(i); setSelectedRank(null); }
+  /** @param {Rank | null} rank */
   function pickRank(rank) { setSelectedRank(rank); }
+  /** @param {Suit} suit */
   function pickSuit(suit) {
     if (activeSlot === null || !selectedRank) return;
     const newSlots = [...slots];
@@ -230,6 +252,7 @@ export default function ScorerScreen({ t }) {
     const next = newSlots.findIndex((s, i) => i !== activeSlot && s === null);
     setActiveSlot(next === -1 ? null : next);
   }
+  /** @param {number} i */
   function removeCard(i) {
     const s = [...slots]; s[i] = null; setSlots(s);
     setActiveSlot(i); setSelectedRank(null);
