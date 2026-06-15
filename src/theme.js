@@ -10,9 +10,37 @@ const FONT_UI   = "-apple-system, 'SF Pro Display', 'SF Pro Text', BlinkMacSyste
 const FONT_CARD = "'Spectral', Georgia, 'Times New Roman', serif";
 const FONT_MONO = "'SF Mono', ui-monospace, 'Cascadia Mono', 'Roboto Mono', 'Menlo', monospace";
 
+// Scale tokens (theme-independent), mirroring DESIGN.md. Exposed on the theme
+// so call-sites reference the scale instead of one-off magic numbers.
+const SPACE  = { 1: 4, 2: 8, 3: 12, 4: 16, 5: 20, 6: 24, 8: 32, 10: 40, 12: 48 };
+const RADIUS = { sm: 4, card: 6, md: 8, lg: 12, pill: 999 };
+const FONT_SIZE = { display: 56, title: 28, heading: 21, body: 15, bodySm: 13, label: 11, micro: 9 };
+const SCALE = { space: SPACE, radius: RADIUS, fontSize: FONT_SIZE };
+
+/**
+ * The resolved Card Room theme: color tokens, type stacks, and scale tokens.
+ * Every value is a CSS string except where noted.
+ * @typedef {Object} Theme
+ * @property {boolean} dark
+ * @property {string} feltDeep @property {string} feltBase @property {string} feltMid
+ * @property {string} feltLift @property {string} feltRule
+ * @property {string} cardFace @property {string} cardWarm
+ * @property {string} goldBright @property {string} goldMuted @property {string} goldDim @property {string} goldGlow
+ * @property {string} scorePositive @property {string} scoreMiss
+ * @property {string} suitRed @property {string} suitDark
+ * @property {string} textPrimary @property {string} textSecondary @property {string} textMuted @property {string} textDisabled
+ * @property {string} textOnCard @property {string} textOnGold
+ * @property {string[]} tierGrade
+ * @property {string} fontUi @property {string} fontCard @property {string} fontMono
+ * @property {Record<number, number>} space
+ * @property {{ sm: number, card: number, md: number, lg: number, pill: number }} radius
+ * @property {Record<string, number>} fontSize
+ * @property {string} redSuitBg @property {string} blueSuitBg @property {string} redSuitHover @property {string} blueSuitHover
+ */
+
 /**
  * Build the Card Room theme for the given mode.
- * @param {boolean} dark @returns {Record<string, any>}
+ * @param {boolean} dark @returns {Theme}
  */
 export function makeTheme(dark) {
   if (dark) {
@@ -53,7 +81,7 @@ export function makeTheme(dark) {
         "oklch(78% 0.138 78)",  // good — 75–89 (same as goldBright)
         "oklch(72% 0.130 150)", // strong — 90+ (same as scorePositive)
       ],
-      fontUi: FONT_UI, fontCard: FONT_CARD, fontMono: FONT_MONO,
+      fontUi: FONT_UI, fontCard: FONT_CARD, fontMono: FONT_MONO, ...SCALE,
       // Suit-row tinted backgrounds. Lightness bumped above felt-mid so the
       // suit row reads as a clearly raised step. Hue tint stays subtle so
       // the felt-room aesthetic isn't disrupted.
@@ -99,7 +127,7 @@ export function makeTheme(dark) {
       "oklch(55% 0.130 75)",
       "oklch(45% 0.150 150)",
     ],
-    fontUi: FONT_UI, fontCard: FONT_CARD, fontMono: FONT_MONO,
+    fontUi: FONT_UI, fontCard: FONT_CARD, fontMono: FONT_MONO, ...SCALE,
     redSuitBg:     "oklch(93% 0.035 25)",
     blueSuitBg:    "oklch(92% 0.025 240)",
     redSuitHover:  "oklch(88% 0.050 25)",
@@ -110,7 +138,7 @@ export function makeTheme(dark) {
 /**
  * Theme hook. Honors prefers-color-scheme, supports a manual override that
  * persists across reloads, and returns [theme, toggle, isDark].
- * @returns {[Record<string, any>, () => void, boolean]}
+ * @returns {[Theme, () => void, boolean]}
  */
 export function useTheme() {
   const sysMq = typeof window !== "undefined"
@@ -128,6 +156,7 @@ export function useTheme() {
 
   useEffect(() => {
     const m = window.matchMedia("(prefers-color-scheme: dark)");
+    /** @param {MediaQueryListEvent} e */
     const h = e => setSysDark(e.matches);
     m.addEventListener("change", h);
     return () => m.removeEventListener("change", h);

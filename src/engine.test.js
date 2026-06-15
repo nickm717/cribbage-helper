@@ -1,10 +1,12 @@
 import { describe, it, expect } from "vitest";
 import {
-  RANKS, SUITS, cardValue, scoreHand, scorePairs, scoreRuns, scoreFlush,
+  RANKS, SUITS, cardValue, scoreHand, scoreHandTotal, scorePairs, scoreRuns, scoreFlush,
   scoreNobs, scoreHeels, fullDeck, cardKey, combos, shuffle,
 } from "./engine.js";
+import { describeKeep } from "./format.js";
 
 // Terse card constructor for readable canonical hands.
+/** @param {import("./engine.js").Rank} rank @param {import("./engine.js").Suit} suit */
 const C = (rank, suit) => ({ rank, suit });
 
 describe("cardValue", () => {
@@ -171,7 +173,7 @@ describe("impossibility guards", () => {
     // rank-driven scores (fifteens, pairs, runs) across every 4-rank hand +
     // every cut rank. 13^4 * 13 patterns, deduped by value.
     const seen = new Set();
-    const suits = ["♠", "♥", "♦", "♣"];
+    const suits = SUITS;
     for (let a = 0; a < 13; a++)
     for (let b = a; b < 13; b++)
     for (let c = b; c < 13; c++)
@@ -211,6 +213,23 @@ describe("impossibility guards", () => {
   }, 20000);
 });
 
+describe("describeKeep (plain-language why)", () => {
+  it("names a run and a fifteen", () => {
+    const s = describeKeep([C("4","♠"), C("5","♥"), C("6","♦"), C("9","♣")]);
+    expect(s).toMatch(/run/);
+    expect(s).toMatch(/fifteen/);
+  });
+  it("names a pair", () => {
+    expect(describeKeep([C("8","♠"), C("8","♥"), C("2","♦"), C("K","♣")])).toMatch(/pair/);
+  });
+  it("names four to a flush", () => {
+    expect(describeKeep([C("2","♥"), C("6","♥"), C("9","♥"), C("K","♥")])).toMatch(/flush/);
+  });
+  it("falls back gracefully when nothing notable", () => {
+    expect(describeKeep([C("2","♠"), C("7","♥"), C("9","♦"), C("K","♣")])).toBeTruthy();
+  });
+});
+
 describe("deck and combos", () => {
   it("the deck is 52 unique cards", () => {
     const deck = fullDeck();
@@ -222,6 +241,16 @@ describe("deck and combos", () => {
 
   it("combos(6,4) yields the 15 discard keeps", () => {
     expect(combos([1, 2, 3, 4, 5, 6], 4)).toHaveLength(15);
+  });
+
+  it("scoreHandTotal matches scoreHand().total across many deals", () => {
+    // The memoized fast path used in EV loops must equal the full scorer.
+    for (let i = 0; i < 1500; i++) {
+      const c = shuffle(fullDeck()).slice(0, 5);
+      const hand = c.slice(0, 4), cut = c[4];
+      expect(scoreHandTotal(hand, cut, false)).toBe(scoreHand(hand, cut, false).total);
+      expect(scoreHandTotal(hand, cut, true)).toBe(scoreHand(hand, cut, true).total);
+    }
   });
 
   it("shuffle returns a permutation without mutating the input", () => {

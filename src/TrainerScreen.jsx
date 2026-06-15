@@ -1,9 +1,28 @@
-import { useState, useEffect } from "react";
-import { rankIdx, isRed, cardKey, fullDeck, scoreHand, analyzeHand, shuffle } from "./engine.js";
-import { efficiencyPct, tierColor, cardLabel } from "./format.js";
+import { useState, useEffect, useReducer, useRef } from "react";
+import { rankIdx, isRed, cardKey, fullDeck, scoreHand, shuffle } from "./engine.js";
+import { efficiencyPct, tierColor, cardLabel, describeKeep } from "./format.js";
+import { useAnalyzeWorker } from "./useAnalyzeWorker.js";
+
+/** @typedef {import("./theme.js").Theme} Theme */
+/** @typedef {import("./engine.js").Card} Card */
+/** @typedef {import("./engine.js").HandScore} HandScore */
+/** @typedef {import("./engine.js").ScorePart} ScorePart */
+/** @typedef {import("./engine.js").DiscardOption} DiscardOption */
+/**
+ * @typedef {Object} Feedback
+ * @property {number} playerEV @property {number} playerHandEV @property {number} playerCribEV
+ * @property {number} optEV @property {string} grade @property {number} evDiff
+ * @property {Card[]} optKeep
+ */
+/**
+ * @typedef {Object} SessionState
+ * @property {number} hands @property {number} yourPts @property {number} optPts
+ * @property {number} yourEV @property {number} optEV
+ */
 
 // ─── History persistence ─────────────────────────────────────────────────────
 
+/** @param {string} grade @param {number} yourEV @param {number} optEV */
 function saveHandToHistory(grade, yourEV, optEV) {
   let sessions;
   try {
@@ -47,6 +66,7 @@ function saveHandToHistory(grade, yourEV, optEV) {
 // PlayingCard: cream Card Face surface with Spectral serif rank glyphs.
 // Two-layer shadow per DESIGN.md Two-Layer Shadow Rule. CardFan handles
 // the lift / rotate hover transform; this component only paints the face.
+/** @param {{ card: Card | null, selected?: boolean, dimmed?: boolean, t: Theme }} props */
 function PlayingCard({ card, selected, dimmed, t }) {
   const red = card && isRed(card.suit);
   const ink = red ? t.suitRed : t.suitDark;
@@ -54,7 +74,7 @@ function PlayingCard({ card, selected, dimmed, t }) {
   const selectedShadow = `0 0 0 2px ${t.goldBright}, 0 6px 20px oklch(0% 0 0 / 0.45)`;
   return (
     <div style={{
-      width: 72, height: 104, borderRadius: 8, flexShrink: 0,
+      width: 72, height: 104, borderRadius: t.radius.md, flexShrink: 0,
       background: t.cardFace,
       border: selected ? `2px solid ${t.goldBright}` : "2px solid oklch(0% 0 0 / 0.08)",
       boxShadow: selected ? selectedShadow : restShadow,
@@ -100,6 +120,10 @@ function PlayingCard({ card, selected, dimmed, t }) {
 // lift via translateY only — no z-index is ever modified. The negative margin
 // overlap (OVERLAP px) exposes the DOM stacking order so a lifted card slides
 // under cards that come later in the DOM, exactly as required.
+/**
+ * @param {{ cards: Card[], selected?: number[], onSelect?: (i: number) => void,
+ *   dimOthers?: boolean, t: Theme }} props
+ */
 function CardFan({ cards, selected = [], onSelect, dimOthers = false, t }) {
   const LIFT = 13;    // translateY lift on selection
   const OVERLAP = 18; // px each card overlaps the previous
@@ -129,7 +153,7 @@ function CardFan({ cards, selected = [], onSelect, dimOthers = false, t }) {
               transform: isSel ? `translateY(-${LIFT}px)` : "translateY(0)",
               transition: "transform 200ms cubic-bezier(0.22, 0.8, 0.36, 1)",
               cursor: interactive ? "pointer" : "default",
-              borderRadius: 8,
+              borderRadius: t.radius.md,
               WebkitTapHighlightColor: "transparent",
             }}
           >
@@ -147,6 +171,7 @@ function CardFan({ cards, selected = [], onSelect, dimOthers = false, t }) {
 // the cards should read as discrete objects with their own surface.
 // Black suits use textOnCard (deep value designed for the cream Card Face);
 // textPrimary would be invisible since it's the light-on-dark UI color.
+/** @param {{ card: Card, t: Theme }} props */
 function MiniCard({ card, t }) {
   const red = isRed(card.suit);
   return (
@@ -154,7 +179,7 @@ function MiniCard({ card, t }) {
       display: "inline-flex", alignItems: "center",
       fontSize: 12, fontWeight: 700,
       color: red ? t.suitRed : t.textOnCard,
-      background: t.cardFace, borderRadius: 4, padding: "3px 7px",
+      background: t.cardFace, borderRadius: t.radius.sm, padding: "3px 7px",
       fontFamily: t.fontCard, lineHeight: 1,
       border: `1px solid oklch(0% 0 0 / 0.08)`,
     }}>{card.rank}{card.suit}</span>
@@ -164,6 +189,7 @@ function MiniCard({ card, t }) {
 // MiniCardInline: typographic variant. Used in score-row sub-text where the
 // cards are evidence of what scored, not separate objects. Renders as plain
 // inline glyphs in suit color, no chip, no border.
+/** @param {{ card: Card, t: Theme }} props */
 function MiniCardInline({ card, t }) {
   const red = isRed(card.suit);
   return (
@@ -177,6 +203,7 @@ function MiniCardInline({ card, t }) {
   );
 }
 
+/** @param {{ label: string, value: string | number, t: Theme }} props */
 function StatChip({ label, value, t }) {
   return (
     <div style={{ textAlign: "center" }}>
@@ -191,6 +218,7 @@ function StatChip({ label, value, t }) {
 // Tier color follows the score-tier palette (the only multi-color exception in
 // the system, per DESIGN.md). Compact vertical footprint: the strip aligns
 // label + metadata to the big number's baseline so the whole row is one line tall.
+/** @param {{ hands: number, yourEV: number, optEV: number, efficiency: number, t: Theme }} props */
 function SessionStatStrip({ hands, yourEV, optEV, efficiency, t }) {
   const hasData = hands > 0;
   const tier = hasData ? tierColor(efficiency, t) : null;
@@ -218,7 +246,7 @@ function SessionStatStrip({ hands, yourEV, optEV, efficiency, t }) {
       <div style={{
         fontFamily: t.fontMono,
         fontSize: 32, fontWeight: 700, lineHeight: 1,
-        color: hasData ? tier : t.textMuted,
+        color: tier || t.textMuted,
         letterSpacing: "-0.02em",
         flexShrink: 0,
       }}>
@@ -228,10 +256,11 @@ function SessionStatStrip({ hands, yourEV, optEV, efficiency, t }) {
   );
 }
 
+/** @param {{ label: string, onClick: () => void, disabled?: boolean, t: Theme }} props */
 function ActionButton({ label, onClick, disabled, t }) {
   return (
     <button onClick={onClick} disabled={disabled} style={{
-      flex: 1, padding: "14px 0", borderRadius: 8, border: "none",
+      flex: 1, padding: "14px 0", borderRadius: t.radius.md, border: "none",
       background: disabled ? t.feltMid : t.goldBright,
       color: disabled ? t.textDisabled : t.textOnGold,
       fontSize: 15, fontWeight: 600,
@@ -246,6 +275,7 @@ function ActionButton({ label, onClick, disabled, t }) {
   );
 }
 
+/** @param {{ title?: string, children: import("react").ReactNode, t: Theme, accent?: string }} props */
 function SectionBlock({ title, children, t, accent }) {
   return (
     <div style={{
@@ -261,13 +291,14 @@ function SectionBlock({ title, children, t, accent }) {
 // ScoreLogRow: v2 layout. Reason text on top, the cards that scored as inline
 // sub-text below, +N value right-aligned in SF Mono. The sub-line turns a
 // count into a teaching moment by showing exactly which cards combined.
+/** @param {{ item: ScorePart, t: Theme, accentGold?: boolean }} props */
 function ScoreLogRow({ item, t, accentGold = false }) {
   const uniqueCards = [...new Map(item.cards.map(c => [cardKey(c), c])).values()];
   return (
     <div style={{
       display: "flex", alignItems: "center", gap: 12,
       padding: "10px 14px", marginBottom: 6,
-      background: t.feltMid, border: `1px solid ${t.feltRule}`, borderRadius: 8,
+      background: t.feltMid, border: `1px solid ${t.feltRule}`, borderRadius: t.radius.md,
     }}>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
@@ -301,6 +332,7 @@ function ScoreLogRow({ item, t, accentGold = false }) {
 // strategic hint so a newer player learns the implication. Progress through
 // the selection ("Select 2 more cards" → "Discard →") is shown by the dock
 // button, not here, so One Voice (gold) stays uncontested in this region.
+/** @param {{ isDealer: boolean, t: Theme }} props */
 function CribDestination({ isDealer, t }) {
   const owner = isDealer ? "Your crib" : "Opponent's crib";
   const implication = isDealer
@@ -335,12 +367,40 @@ function CribDestination({ isDealer, t }) {
   );
 }
 
+/** @param {{ isDealer: boolean, t: Theme }} props */
 function DiscardBody({ isDealer, t }) {
   return <CribDestination isDealer={isDealer} t={t} />;
 }
 
+// CalculatingBody: the brief reveal-pending state while the EV worker runs.
+// Surfaces real progress so a slow device shows motion tied to work, not a
+// decorative spinner.
+/** @param {{ progress: number, t: Theme }} props */
+function CalculatingBody({ progress, t }) {
+  const pct = Math.round(progress * 100);
+  return (
+    <div role="status" aria-live="polite" style={{
+      paddingTop: 40, display: "flex", flexDirection: "column",
+      alignItems: "center", gap: 14,
+    }}>
+      <div style={{
+        fontSize: 9, fontWeight: 700, color: t.textMuted,
+        letterSpacing: "0.12em", textTransform: "uppercase", lineHeight: 1,
+      }}>Scoring the cut</div>
+      <div style={{
+        fontSize: 24, fontWeight: 800, color: t.textPrimary, letterSpacing: "-0.01em",
+      }}>Calculating EV…</div>
+      <div style={{ width: "70%", maxWidth: 240, background: t.feltLift, borderRadius: t.radius.pill, height: 4, overflow: "hidden" }}>
+        <div style={{ height: "100%", width: `${pct}%`, background: t.goldBright, borderRadius: t.radius.pill, transition: "width 120ms linear" }} />
+      </div>
+      <div style={{ fontFamily: t.fontMono, fontSize: 12, color: t.textSecondary }}>{pct}%</div>
+    </div>
+  );
+}
+
 // ─── Discard analysis table ──────────────────────────────────────────────────
 
+/** @param {{ rank: number, t: Theme }} props */
 function RankBadge({ rank, t }) {
   const bg = rank >= 90 ? "oklch(30% 0.060 150 / 0.5)"
     : rank >= 70 ? "oklch(30% 0.060 78 / 0.5)"
@@ -361,6 +421,7 @@ function RankBadge({ rank, t }) {
   );
 }
 
+/** @param {{ option: DiscardOption, isPlayerDiscard: boolean, isOptimal: boolean, t: Theme }} props */
 function DiscardOptionRow({ option, isPlayerDiscard, isOptimal, t }) {
   const border = isOptimal
     ? `1px solid ${t.goldDim}`
@@ -371,7 +432,7 @@ function DiscardOptionRow({ option, isPlayerDiscard, isOptimal, t }) {
 
   return (
     <div style={{
-      background: bg, border, borderRadius: 8,
+      background: bg, border, borderRadius: t.radius.md,
       padding: "10px 12px", display: "flex", flexDirection: "column", gap: 7,
     }}>
       {/* Top row: kept cards + rank badge */}
@@ -397,7 +458,7 @@ function DiscardOptionRow({ option, isPlayerDiscard, isOptimal, t }) {
           { label: "CRIB", value: option.cribAvg.toFixed(1) },
           { label: "NET", value: option.combinedEV.toFixed(1) },
         ].map(({ label, value }) => (
-          <div key={label} style={{ background: t.feltDeep, borderRadius: 6, padding: "5px 6px", textAlign: "center" }}>
+          <div key={label} style={{ background: t.feltDeep, borderRadius: t.radius.card, padding: "5px 6px", textAlign: "center" }}>
             <div style={{ fontSize: 8, color: t.textMuted, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 2 }}>{label}</div>
             <div style={{ fontSize: 12, fontWeight: 600, color: label === "NET" ? t.goldBright : t.textPrimary, fontFamily: t.fontMono, letterSpacing: "-0.01em" }}>{value}</div>
           </div>
@@ -407,6 +468,7 @@ function DiscardOptionRow({ option, isPlayerDiscard, isOptimal, t }) {
   );
 }
 
+/** @param {{ allOptions: DiscardOption[], discarded: Card[], optKeep: Card[] | null, t: Theme }} props */
 function DiscardOptionsTable({ allOptions, discarded, optKeep, t }) {
   const [expanded, setExpanded] = useState(false);
   if (!allOptions.length) return null;
@@ -464,6 +526,12 @@ function DiscardOptionsTable({ allOptions, discarded, optKeep, t }) {
   );
 }
 
+/**
+ * @param {{ feedback: Feedback | null, kept: Card[], discarded: Card[], cut: Card | null,
+ *   handResult: HandScore | null, cribResult: HandScore | null, optHandResult: HandScore | null,
+ *   optResult: DiscardOption | null, allOptions: DiscardOption[], isDealer: boolean,
+ *   session: SessionState, t: Theme }} props
+ */
 function ScoreBody({ feedback, kept, discarded, cut, handResult, cribResult, optHandResult, optResult, allOptions, isDealer, session, t }) {
   const gradeColor = !feedback ? t.goldBright
     : feedback.grade === "Optimal" ? t.scorePositive
@@ -503,6 +571,15 @@ function ScoreBody({ feedback, kept, discarded, cut, handResult, cribResult, opt
               {feedback.optKeep.map(c => (
                 <MiniCard key={cardKey(c)} card={c} t={t} />
               ))}
+            </div>
+          )}
+          {/* Plain-language "why": teach the reasoning, not just the EV gap. */}
+          {feedback.optKeep && (
+            <div style={{
+              marginTop: feedback.grade !== "Optimal" ? 6 : 8,
+              fontSize: 12, color: t.textMuted, lineHeight: 1.4,
+            }}>
+              {feedback.grade === "Optimal" ? "Why: " : "The optimal keep — "}{describeKeep(feedback.optKeep)}
             </div>
           )}
         </SectionBlock>
@@ -558,11 +635,11 @@ function ScoreBody({ feedback, kept, discarded, cut, handResult, cribResult, opt
         <div style={{ fontSize: 9, color: t.textMuted, letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>
           Efficiency
         </div>
-        <div style={{ background: t.feltLift, borderRadius: 999, height: 3, overflow: "hidden", marginBottom: 6 }}>
+        <div style={{ background: t.feltLift, borderRadius: t.radius.pill, height: 3, overflow: "hidden", marginBottom: 6 }}>
           <div style={{
             height: "100%", width: `${Math.min(100, eff)}%`,
             background: t.goldBright,
-            borderRadius: 999, transition: "width 0.6s ease-out",
+            borderRadius: t.radius.pill, transition: "width 0.6s ease-out",
           }} />
         </div>
         <div style={{ fontFamily: t.fontMono, fontSize: 28, fontWeight: 700, color: effColor, letterSpacing: "-0.02em" }}>{eff}%</div>
@@ -582,95 +659,161 @@ function ScoreBody({ feedback, kept, discarded, cut, handResult, cribResult, opt
   );
 }
 
+// ─── Round state (reducer) ───────────────────────────────────────────────────
+//
+// All per-hand state lives in one reducer instead of a dozen useState slices, so
+// a transition can never leave half the round updated. `phase` drives the UI:
+// discard → scoring (EV worker running) → score.
+
+/**
+ * @typedef {Object} RoundState
+ * @property {"discard"|"scoring"|"score"} phase
+ * @property {boolean} isDealer
+ * @property {Card[]} hand6
+ * @property {number[]} selected
+ * @property {Card[]} kept
+ * @property {Card[]} discarded
+ * @property {Card | null} cut
+ * @property {HandScore | null} handResult
+ * @property {HandScore | null} cribResult
+ * @property {DiscardOption | null} optResult
+ * @property {HandScore | null} optHandResult
+ * @property {Feedback | null} feedback
+ * @property {DiscardOption[]} allOptions
+ * @property {number} progress
+ * @property {string | null} error
+ */
+
+/** @type {RoundState} */
+const INITIAL_ROUND = {
+  phase: "discard",
+  isDealer: true,
+  hand6: [],
+  selected: [],
+  kept: [],
+  discarded: [],
+  cut: null,
+  handResult: null,
+  cribResult: null,
+  optResult: null,
+  optHandResult: null,
+  feedback: null,
+  allOptions: [],
+  progress: 0,
+  error: null,
+};
+
+/** @param {RoundState} state @param {{ type: string } & Record<string, any>} action @returns {RoundState} */
+function roundReducer(state, action) {
+  switch (action.type) {
+    case "DEAL":
+      return { ...INITIAL_ROUND, hand6: action.hand6, isDealer: action.isDealer };
+    case "TOGGLE_SELECT": {
+      const { selected } = state;
+      const next = selected.includes(action.idx)
+        ? selected.filter(i => i !== action.idx)
+        : selected.length >= 2 ? selected : [...selected, action.idx];
+      return { ...state, selected: next };
+    }
+    case "START_SCORING":
+      return {
+        ...state, phase: "scoring", progress: 0, error: null,
+        kept: action.kept, discarded: action.discarded, cut: action.cut,
+        handResult: action.handResult, cribResult: action.cribResult,
+      };
+    case "PROGRESS":
+      return { ...state, progress: action.progress };
+    case "ANALYSIS_DONE":
+      return {
+        ...state, phase: "score",
+        feedback: action.feedback, optResult: action.optResult,
+        optHandResult: action.optHandResult, allOptions: action.allOptions,
+      };
+    case "ANALYSIS_ERROR":
+      // Degrade gracefully: the hand/crib score still shows; the EV grade and
+      // options are simply absent with a note.
+      return { ...state, phase: "score", error: action.error };
+    default:
+      return state;
+  }
+}
+
 // ─── Main TrainerScreen ──────────────────────────────────────────────────────
 
+/** @param {{ t: Theme }} props */
 export default function TrainerScreen({ t }) {
   const [session, setSession] = useState({ hands: 0, yourPts: 0, optPts: 0, yourEV: 0, optEV: 0 });
-  const [phase, setPhase] = useState("discard");
-  const [isDealer, setIsDealer] = useState(true);
-  const [hand6, setHand6] = useState([]);
-  const [selected, setSelected] = useState([]);
-  const [kept, setKept] = useState([]);
-  const [discarded, setDiscarded] = useState([]);
-  const [cut, setCut] = useState(null);
-  const [optResult, setOptResult] = useState(null);
-  const [feedback, setFeedback] = useState(null);
-  const [handResult, setHandResult] = useState(null);
-  const [cribResult, setCribResult] = useState(null);
-  const [optHandResult, setOptHandResult] = useState(null);
-  const [allOptions, setAllOptions] = useState([]);
+  const [round, dispatch] = useReducer(roundReducer, INITIAL_ROUND);
+  const { analyze, cancel } = useAnalyzeWorker();
+  // Monotonic token: any analysis whose token is stale (a new hand was dealt) is
+  // ignored when it resolves — this is the cancellation mechanism.
+  const tokenRef = useRef(0);
+
+  const {
+    phase, isDealer, hand6, selected, kept, discarded, cut,
+    handResult, cribResult, optResult, optHandResult, feedback, allOptions, progress, error,
+  } = round;
 
   function dealNewHand() {
+    tokenRef.current++;
+    cancel();
     const deck = shuffle(fullDeck());
     const newHand6 = deck.slice(0, 6).sort((a, b) => rankIdx(a.rank) - rankIdx(b.rank));
-    setHand6(newHand6);
-    setIsDealer(Math.random() > 0.5);
-    setSelected([]); setKept([]); setDiscarded([]); setCut(null);
-    setFeedback(null); setOptResult(null);
-    setHandResult(null); setCribResult(null); setOptHandResult(null);
-    setAllOptions([]);
-    setPhase("discard");
+    dispatch({ type: "DEAL", hand6: newHand6, isDealer: Math.random() > 0.5 });
   }
 
   // Initial deal
   useEffect(() => { dealNewHand(); }, []); // eslint-disable-line
 
-  function toggleSelect(idx) {
-    setSelected(prev =>
-      prev.includes(idx) ? prev.filter(i => i !== idx) : prev.length >= 2 ? prev : [...prev, idx]
-    );
-  }
+  /** @param {number} idx */
+  function toggleSelect(idx) { dispatch({ type: "TOGGLE_SELECT", idx }); }
 
-  function confirmDiscard() {
+  async function confirmDiscard() {
     if (selected.length !== 2) return;
     const keptCards = hand6.filter((_, i) => !selected.includes(i));
     const discardedCards = hand6.filter((_, i) => selected.includes(i));
 
-    // ── Full discard analysis — all 15 options ranked by combined EV ────────
-    // Player EV is looked up from the same table, avoiding a duplicate analysis pass.
-    const options = analyzeHand(hand6, isDealer);
-    const optBest = options[0];
-
-    const playerKeepKey = keptCards.map(cardKey).sort().join(",");
-    const playerOption = options.find(o => o.keep.map(cardKey).sort().join(",") === playerKeepKey);
-    const playerHandEV = playerOption?.handAvg ?? 0;
-    const playerCribEV = playerOption?.cribAvg ?? 0;
-    const playerEV = playerOption?.combinedEV ?? 0;
-    const evDiff = playerEV - optBest.combinedEV;
-    // "Optimal" = you found the single best keep (within rounding of the approximation).
-    // "Close" = within 1.5 EV points. "Suboptimal" = further off.
-    const grade = evDiff >= -0.5 ? "Optimal" : evDiff >= -1.5 ? "Close" : "Suboptimal";
-    const fb = { playerEV, playerHandEV, playerCribEV, optEV: optBest.combinedEV, grade, evDiff, optKeep: optBest.keep };
-
-    // ── Draw cut card ──────────────────────────────────────────────────────
+    // ── Draw cut card and score the shown hand/crib (cheap, on main thread) ──
     const exclSet = new Set(hand6.map(cardKey));
     const remaining = fullDeck().filter(c => !exclSet.has(cardKey(c)));
     const cutCard = remaining[Math.floor(Math.random() * remaining.length)];
-
-    // ── Score hand ─────────────────────────────────────────────────────────
     const hResult = scoreHand(keptCards, cutCard, false);
-
-    // ── Score crib (dealer only — simulate 2 random opponent discards) ─────
     let cResult = null;
     if (isDealer) {
       const rem2 = remaining.filter(c => cardKey(c) !== cardKey(cutCard));
-      const oDiscard = shuffle(rem2).slice(0, 2);
-      cResult = scoreHand([...discardedCards, ...oDiscard], cutCard, true);
+      cResult = scoreHand([...discardedCards, ...shuffle(rem2).slice(0, 2)], cutCard, true);
     }
 
-    // ── Score what the optimal keep would have gotten with this cut ────────
-    const optH = scoreHand(optBest.keep, cutCard, false);
+    const token = ++tokenRef.current;
+    dispatch({
+      type: "START_SCORING",
+      kept: keptCards, discarded: discardedCards, cut: cutCard,
+      handResult: hResult, cribResult: cResult,
+    });
 
-    setFeedback(fb);
-    setOptResult(optBest);
-    setKept(keptCards);
-    setDiscarded(discardedCards);
-    setCut(cutCard);
-    setHandResult(hResult);
-    setCribResult(cResult);
-    setOptHandResult(optH);
-    setAllOptions(options);
-    setPhase("score");
+    // ── Heavy EV analysis runs in the worker; result matched by token ───────
+    try {
+      const options = await analyze(hand6, isDealer, (done, total) => {
+        if (token === tokenRef.current) dispatch({ type: "PROGRESS", progress: done / total });
+      });
+      if (token !== tokenRef.current) return; // a new hand was dealt; drop result
+
+      const optBest = options[0];
+      const playerKeepKey = keptCards.map(cardKey).sort().join(",");
+      const playerOption = options.find(o => o.keep.map(cardKey).sort().join(",") === playerKeepKey);
+      const playerEV = playerOption?.combinedEV ?? 0;
+      const evDiff = playerEV - optBest.combinedEV;
+      // "Optimal" = best keep within rounding. "Close" = within 1.5 EV. Else "Suboptimal".
+      const grade = evDiff >= -0.5 ? "Optimal" : evDiff >= -1.5 ? "Close" : "Suboptimal";
+      const fb = {
+        playerEV, playerHandEV: playerOption?.handAvg ?? 0, playerCribEV: playerOption?.cribAvg ?? 0,
+        optEV: optBest.combinedEV, grade, evDiff, optKeep: optBest.keep,
+      };
+      const optH = scoreHand(optBest.keep, cutCard, false);
+      dispatch({ type: "ANALYSIS_DONE", feedback: fb, optResult: optBest, optHandResult: optH, allOptions: options });
+    } catch (err) {
+      if (token === tokenRef.current) dispatch({ type: "ANALYSIS_ERROR", error: err instanceof Error ? err.message : String(err) });
+    }
   }
 
   function handleDealNewHand() {
@@ -691,6 +834,7 @@ export default function TrainerScreen({ t }) {
   }
 
   const sessionEfficiency = efficiencyPct(session.yourEV, session.optEV);
+  const revealCards = phase === "scoring" || phase === "score";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: t.feltBase }}>
@@ -714,15 +858,27 @@ export default function TrainerScreen({ t }) {
       <div style={{ flex: 1, overflowY: "auto", padding: "14px 16px 8px", background: t.feltDeep }}>
 
         {phase === "discard" && <DiscardBody isDealer={isDealer} t={t} />}
+        {phase === "scoring" && <CalculatingBody progress={progress} t={t} />}
         {phase === "score" && (
-          <ScoreBody
-            feedback={feedback}
-            kept={kept} discarded={discarded} cut={cut}
-            handResult={handResult} cribResult={cribResult}
-            optHandResult={optHandResult} optResult={optResult}
-            allOptions={allOptions}
-            isDealer={isDealer} session={session} t={t}
-          />
+          <>
+            {error && (
+              <div style={{
+                marginBottom: 10, padding: "10px 14px", borderRadius: t.radius.md,
+                background: t.feltMid, border: `1px solid ${t.scoreMiss}`,
+                color: t.textSecondary, fontSize: 13,
+              }}>
+                Couldn't compute the EV breakdown for this hand. Your score is shown below.
+              </div>
+            )}
+            <ScoreBody
+              feedback={feedback}
+              kept={kept} discarded={discarded} cut={cut}
+              handResult={handResult} cribResult={cribResult}
+              optHandResult={optHandResult} optResult={optResult}
+              allOptions={allOptions}
+              isDealer={isDealer} session={session} t={t}
+            />
+          </>
         )}
 
       </div>
@@ -744,7 +900,7 @@ export default function TrainerScreen({ t }) {
               t={t}
             />
           )}
-          {phase === "score" && kept.length > 0 && (
+          {revealCards && kept.length > 0 && (
             <div style={{ display: "flex", alignItems: "flex-end", gap: 14 }}>
               <CardFan cards={kept} t={t} />
               {cut && (
@@ -766,6 +922,9 @@ export default function TrainerScreen({ t }) {
               onClick={confirmDiscard}
               t={t}
             />
+          )}
+          {phase === "scoring" && (
+            <ActionButton label="Calculating…" disabled onClick={() => {}} t={t} />
           )}
           {phase === "score" && (
             <ActionButton label="Deal New Hand →" onClick={handleDealNewHand} t={t} />
